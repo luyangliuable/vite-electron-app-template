@@ -85,21 +85,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  div, h1, h2, h3, span, label, * {
-    color: white !important;
-  }
+/* @media (prefers-color-scheme: dark) { */
+/*   div, h1, h2, h3, span, label, * { */
+/*     color: white !important; */
+/*   } */
 
-  input {
-    color: black !important;
-  }
+/*   input { */
+/*     color: black !important; */
+/*   } */
 
-  button {
-    background: var(--color-background-dark3) !important;
-  }
+/*   button { */
+/*     background: var(--color-background-dark3) !important; */
+/*   } */
 
-  table, thead, tr, th, td {
-    background: var(--color-background-dark4) !important;
-    border-color: var(--color-background-dark5) !important;
-  }
-}
+/*   table, thead, tr, th, td { */
+/*     background: var(--color-background-dark4) !important; */
+/*     border-color: var(--color-background-dark5) !important; */
+/*   } */
+/* } */

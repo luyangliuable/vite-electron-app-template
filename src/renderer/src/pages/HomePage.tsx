@@ -8,6 +8,11 @@ import { ReactNode, useEffect, useState } from "react";
 import { Button, Flex, Switch } from "antd";
 import { useNavigate } from "react-router-dom";
 
+import image from "../assets/sn_primary_logo.png"
+// import background from "../assets/primary_background.png"
+import background from "../assets/primary_background_3.png"
+
+
 function HomePage(): JSX.Element {
   const [useEnterpriseServer, setUseEnterpriseServer] = useState<boolean>(
     globalThis.useEnterpriseServer,
@@ -20,24 +25,16 @@ function HomePage(): JSX.Element {
 
   const buttons: { text: string; path: string; icon: ReactNode }[] = [
     {
-      text: "List Team Repositories",
+      text: "Quick Scan",
       path: "/list-team-repos",
       icon: <UnorderedListOutlined />,
+      description: "Record a heart sound without saving the results"
     },
     {
-      text: "Add Files",
+      text: "Patient Select",
       path: "/add-files",
       icon: <FileAddOutlined />,
-    },
-    {
-      text: "Add Team to Repositories",
-      path: "/add-team-to-repos",
-      icon: <TeamOutlined />,
-    },
-    {
-      text: "Setting",
-      path: "/blank-page",
-      icon: <SettingOutlined />,
+      description: "Record a heart sound and save it to a particular patient"
     },
   ];
 
@@ -45,7 +42,7 @@ function HomePage(): JSX.Element {
     setUseEnterpriseServer(toggle);
   };
 
-  const heading = "GH Util" as const;
+  const heading = "Sonorus" as const;
   const navigate = useNavigate();
 
   const handlePageBtnClick = (path: string): void => {
@@ -54,7 +51,10 @@ function HomePage(): JSX.Element {
   };
 
   return (
-    <main className="dark:bg-[var(--color-background-dark)]">
+    <main
+      className={`bg-cover bg-center bg-no-repeat min-h-screen`}
+      style={{backgroundImage: `url(${background})`}}
+    >
       <Flex
         justify="end"
         gap={10}
@@ -73,20 +73,35 @@ function HomePage(): JSX.Element {
         />
       </Flex>
       <div className="h-[100vh] w-[100vw] position-relative flex flex-col justify-evenly items-center">
-        <h1 className="text-5xl text-[var(--ev-c-text-6)] font-extrabold">
-          {heading}
-        </h1>
-        <div className="flex gap-2 flex-col lg:flex-row">
+        <img src={image} />
+        <div className="flex gap-2 flex-row lg:flex-row">
           {buttons.map((buttonContent, idx) => (
-            <Button
+            <div
               key={idx}
-              className="bg-[var(--color-button)] rounded-2xl p-5"
+              className="relative rounded-2xl py-20 px-8 w-full max-w-80"
               type="primary"
+              className="relative group bg-[rgba(255, 255, 255, 0.1)] text-slate-100 cursor-pointer rounded-2xl py-20 px-8 max-w-80 transform transition-all duration-100 hover:scale-105"
+              style={{
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: `
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3)
+                `
+              }}
               onClick={() => handlePageBtnClick(buttonContent.path)}
             >
-              {buttonContent.icon}
-              {buttonContent.text}
-            </Button>
+              <div className="relative flex flex-col w-full gap-4">
+                <div className="flex flex-row gap-2">
+                  {buttonContent.icon}
+                  {buttonContent.text}
+                </div>
+                <p className="relative w-full text-wrap text-left">
+                  {buttonContent.description}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
         <Flex
