@@ -1,76 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Progress, Steps, Select, Alert } from "antd";
+import { Button, Progress, Steps } from "antd";
 import {
   PlayCircleOutlined,
   StopOutlined,
   HeartOutlined,
-  WifiOutlined,
-  CheckCircleOutlined
 } from "@ant-design/icons";
-import { useLocation } from "react-router-dom";
 import GlassCard from "../components/GlassCard";
-import GlassButton from "../components/GlassButton";
 import Title from "antd/es/typography/Title";
 import "./QuickScan.css";
-import "../styles/theme.css";
 
 const { Step } = Steps;
-const { Option } = Select;
 
-interface HeartArea {
-  key: string;
-  label: string;
-  description: string;
-  icon: string;
-}
-
-const heartAreas: HeartArea[] = [
-  {
-    key: "aortic",
-    label: "Aortic Valve",
-    description: "2nd intercostal space, right sternal border",
-    icon: ""
-  },
-  {
-    key: "pulmonary", 
-    label: "Pulmonary Valve",
-    description: "2nd intercostal space, left sternal border",
-    icon: ""
-  },
-  {
-    key: "tricuspid",
-    label: "Tricuspid Valve",
-    description: "4th intercostal space, left sternal border",
-    icon: ""
-  },
-  {
-    key: "mitral",
-    label: "Mitral Valve", 
-    description: "5th intercostal space, apex",
-    icon: ""
-  }
-];
-
-function ListTeamReposPage(): JSX.Element {
-  const location = useLocation();
+function QuickScanPage(): JSX.Element {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [analysisComplete, setAnalysisComplete] = useState(false);
-  const [selectedHeartArea, setSelectedHeartArea] = useState<string>("");
-  const [patientId, setPatientId] = useState<number | null>(null);
-  
-  // Get patient ID from navigation state if coming from patient select
-  useEffect(() => {
-    if (location.state?.patientId) {
-      setPatientId(location.state.patientId);
-    }
-  }, [location.state]);
 
   const steps = [
     {
-      title: "Setup",
-      description: "Select heart area to record",
+      title: "Prepare",
+      description: "Position stethoscope and prepare for recording",
     },
     {
       title: "Record",
@@ -103,10 +53,6 @@ function ListTeamReposPage(): JSX.Element {
   }, [isRecording]);
 
   const handleStartRecording = (): void => {
-    if (!selectedHeartArea) {
-      alert("Please select a heart area to record");
-      return;
-    }
     setIsRecording(true);
     setCurrentStep(1);
     setRecordingTime(0);
@@ -125,18 +71,9 @@ function ListTeamReposPage(): JSX.Element {
   const handleReset = (): void => {
     setIsRecording(false);
     setRecordingTime(0);
-    setCurrentStep(selectedHeartArea ? 0 : 0);
+    setCurrentStep(0);
     setAnalysisComplete(false);
   };
-  
-  const canStartRecording = selectedHeartArea;
-  
-  // Auto advance to step 1 when heart area is selected
-  useEffect(() => {
-    if (selectedHeartArea && currentStep === 0 && !isRecording && !analysisComplete) {
-      // Stay on step 0 until user manually proceeds
-    }
-  }, [selectedHeartArea, currentStep, isRecording, analysisComplete]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -147,60 +84,14 @@ function ListTeamReposPage(): JSX.Element {
   return (
     <div className="quick-scan-container">
       <div className="mb-6">
-        <Title level={2} style={{ color: 'white', margin: 0 }}>
-          {patientId ? "Patient Recording" : "Quick Heart Sound Scan"}
+        <Title level={2} className="text-white">
+          Quick Heart Sound Scan
         </Title>
-        <p className="text-white/70 text-lg mt-2">
-          {patientId 
-            ? "Record heart sounds and save to patient record" 
-            : "Record heart sounds for immediate analysis without saving to patient records"
-          }
+        <p className="text-white/70 text-lg">
+          Record heart sounds for immediate analysis without saving to patient
+          records
         </p>
       </div>
-
-      {/* Heart Area Selection */}
-      {currentStep === 0 && (
-        <GlassCard padding="md" className="mb-6">
-          <div className="mb-4">
-            <label className="text-white font-medium mb-3 block">Select Heart Area to Record</label>
-            <Select
-              value={selectedHeartArea}
-              onChange={setSelectedHeartArea}
-              placeholder="Choose which heart valve to examine"
-              size="large"
-              className="w-full search-input"
-            >
-              {heartAreas.map((area) => (
-                <Option key={area.key} value={area.key}>
-                  <div>
-                    <div className="font-medium text-white">{area.label}</div>
-                    <div className="text-sm text-white/70 truncate">{area.description}</div>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </div>
-
-          {selectedHeartArea && (
-            <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20">
-              <div>
-                <div className="text-white font-medium">
-                  Selected: {heartAreas.find(area => area.key === selectedHeartArea)?.label}
-                </div>
-                <div className="text-white/70 text-sm">
-                  {heartAreas.find(area => area.key === selectedHeartArea)?.description}
-                </div>
-              </div>
-              <GlassButton
-                variant="primary"
-                onClick={() => setCurrentStep(1)}
-              >
-                Start Recording
-              </GlassButton>
-            </div>
-          )}
-        </GlassCard>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Left Panel - Recording Controls */}
@@ -209,9 +100,9 @@ function ListTeamReposPage(): JSX.Element {
             <div className="text-center mb-8">
               <div className="recording-visualizer mb-6">
                 <div className={`heart-icon ${isRecording ? "beating" : ""}`}>
-                  <span style={{ fontSize: "4rem", display: "block" }}>
-                    🫀
-                  </span>
+                  <HeartOutlined
+                    style={{ fontSize: "4rem", color: "#8C7DD1" }}
+                  />
                 </div>
                 {isRecording && (
                   <div className="sound-waves">
@@ -247,37 +138,39 @@ function ListTeamReposPage(): JSX.Element {
 
               <div className="recording-controls">
                 {!isRecording && !analysisComplete && (
-                  <GlassButton
-                    variant="primary"
-                    size="lg"
+                  <Button
+                    type="primary"
+                    size="large"
                     icon={<PlayCircleOutlined />}
                     onClick={handleStartRecording}
+                    className="recording-btn start-btn"
                     disabled={currentStep === 2}
                   >
                     Start Recording
-                  </GlassButton>
+                  </Button>
                 )}
 
                 {isRecording && (
-                  <GlassButton
-                    variant="danger"
-                    size="lg"
+                  <Button
+                    danger
+                    size="large"
                     icon={<StopOutlined />}
                     onClick={handleStopRecording}
+                    className="recording-btn stop-btn"
                   >
                     Stop Recording
-                  </GlassButton>
+                  </Button>
                 )}
 
                 {analysisComplete && (
                   <div className="space-y-3">
-                    <GlassButton
-                      variant="secondary"
-                      size="lg"
+                    <Button
+                      size="large"
                       onClick={handleReset}
+                      className="recording-btn reset-btn"
                     >
                       New Recording
-                    </GlassButton>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -307,9 +200,9 @@ function ListTeamReposPage(): JSX.Element {
                 <div className="analysis-spinner mb-4">
                   <div className="spinner"></div>
                 </div>
-                <p className="text-white">Analyzing {heartAreas.find(area => area.key === selectedHeartArea)?.label} sounds...</p>
+                <p className="text-white">Analyzing heart sounds...</p>
                 <p className="text-white/60 text-sm">
-                  Processing {recordingTime}s recording
+                  This may take a few seconds
                 </p>
               </div>
             )}
@@ -368,4 +261,4 @@ function ListTeamReposPage(): JSX.Element {
   );
 }
 
-export default ListTeamReposPage;
+export default QuickScanPage;

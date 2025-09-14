@@ -3,11 +3,15 @@ import HomePage from "./pages/HomePage";
 import AddFiles from "./pages/AddFiles";
 import GithubAccessTokenPage from "./pages/GithubAccessTokenPage";
 import ListTeamReposPage from "./pages/ListTeamReposPage";
+import PairDevice from "./pages/PairDevice";
+import RecordingsList from "./pages/RecordingsList";
+import Settings from "./pages/Settings";
 import FeaturePageLayout from "./components/FeaturePageLayout";
 import AddTeamToReposPage from "./pages/AddTeamToReposPage";
 
 import React, { useMemo } from "react";
 import Context from "./store/context";
+import "./styles/theme.css";
 import {
   RadiusBottomleftOutlined,
   RadiusBottomrightOutlined,
@@ -26,8 +30,13 @@ function App(): JSX.Element {
             <Route index element={<HomePage />} />
             <Route element={<FeaturePageLayout />}>
               <Route path="/blank-page" element={<GithubAccessTokenPage />} />
+              <Route path="/patients" element={<AddFiles />} />
               <Route path="/add-files" element={<AddFiles />} />
               <Route path="/list-team-repos" element={<ListTeamReposPage />} />
+              <Route path="/quick-scan" element={<ListTeamReposPage />} />
+              <Route path="/pair-device" element={<PairDevice />} />
+              <Route path="/recordings" element={<RecordingsList />} />
+              <Route path="/settings" element={<Settings />} />
               <Route
                 path="/add-team-to-repos"
                 element={<AddTeamToReposPage />}
