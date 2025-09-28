@@ -322,6 +322,11 @@ function QuickScanPage(): JSX.Element {
             <p className="text-white/70 text-lg mt-2">
               Configure skin barriers that may affect recording quality across all heart valve areas
             </p>
+            {skinBarriers.length === 0 && (
+              <p className="text-white/60 text-sm mt-3">
+                No skin barriers configured. Add barriers that may affect recording quality.
+              </p>
+            )}
           </div>
 
           {/* Scrollable Skin Barriers Container */}
@@ -407,7 +412,7 @@ function QuickScanPage(): JSX.Element {
             )}
 
             {/* Add New Barrier */}
-            <div className="text-center flex-shrink-0 mb-6">
+            <div className="text-center flex-shrink-0 mb-3">
               <GlassButton
                 variant="primary"
                 size="lg"
@@ -417,11 +422,6 @@ function QuickScanPage(): JSX.Element {
               >
                 Add Skin Barrier
               </GlassButton>
-              {skinBarriers.length === 0 && (
-                <p className="text-white/60 text-sm mt-2">
-                  No skin barriers configured. Add barriers that may affect recording quality.
-                </p>
-              )}
               {skinBarriers.length >= 3 && (
                 <p className="text-white/60 text-sm mt-2">
                   Maximum barriers reached. You have all available barrier types (stickers, scars, fat).
@@ -430,7 +430,7 @@ function QuickScanPage(): JSX.Element {
             </div>
           </div>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-2">
             <GlassButton
               variant="primary"
               size="lg"

@@ -33,13 +33,30 @@
 body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   position: fixed !important;
   top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
   z-index: 1000 !important;
-  width: 100vw !important;
-  margin: 0 !important;
-  padding: 1rem 5% !important;
-  box-sizing: border-box !important;
+  /* Preserve original navbar styling */
+  width: 90% !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Make all button text smaller on QuickScan page */
+.quick-scan-container .ant-btn,
+.quick-scan-container button {
+  font-size: 0.875rem !important; /* 14px */
+  line-height: 1.25 !important;
+}
+
+.quick-scan-container .ant-btn-lg,
+.quick-scan-container button.ant-btn-lg {
+  font-size: 0.875rem !important; /* 14px even for large buttons */
+}
+
+.quick-scan-container .ant-btn-sm,
+.quick-scan-container button.ant-btn-sm {
+  font-size: 0.75rem !important; /* 12px for small buttons */
 }
 
 .section-1 {
