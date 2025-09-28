@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Progress, Steps, Select, Alert } from "antd";
+import { Progress, Steps, Alert, Select } from "antd";
 import {
   PlayCircleOutlined,
   StopOutlined,
@@ -12,13 +12,14 @@ import {
 import { useLocation } from "react-router-dom";
 import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
+import AudioWaveform from "../components/AudioWaveform";
+import useMicrophoneAnalyser from "../hooks/useMicrophoneAnalyser";
 import Title from "antd/es/typography/Title";
 import "./QuickScan.css";
 import "../styles/theme.css";
 
 const { Step } = Steps;
 const { Option } = Select;
-
 interface HeartArea {
   key: string;
   label: string;
@@ -76,6 +77,13 @@ function QuickScanPage(): JSX.Element {
   const [recordingResults, setRecordingResults] = useState<Record<string, any>>({});
   const [skinBarriers, setSkinBarriers] = useState<SkinBarrier[]>([]);
   const [currentSection, setCurrentSection] = useState(0);
+  const {
+    analyser,
+    start: startMicrophone,
+    stop: stopMicrophone,
+    error: audioError,
+    clearError,
+  } = useMicrophoneAnalyser();
 
   // Get patient ID from navigation state if coming from patient select
   useEffect(() => {
@@ -115,19 +123,43 @@ function QuickScanPage(): JSX.Element {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  const handleStartRecording = (): void => {
+  const handleStartRecording = async (): Promise<void> => {
     if (!selectedHeartArea) {
       alert("Please select a heart area to record");
       return;
     }
-    setIsRecording(true);
-    setRecordingTime(0);
+    if (isRecording) {
+      return;
+    }
+
+    try {
+      clearError();
+      console.log("Starting microphone...");
+      await startMicrophone();
+      console.log("Microphone started, analyser:", analyser);
+      setIsRecording(true);
+      setRecordingTime(0);
+    } catch (microphoneError) {
+      console.error("Microphone start failed", microphoneError);
+    }
   };
 
   const handleStopRecording = (): void => {
+    stopMicrophone();
+
+    if (!isRecording) {
+      setSelectedHeartArea("");
+      return;
+    }
+
     setIsRecording(false);
 
     const currentArea = selectedHeartArea;
+
+    if (!currentArea) {
+      setSelectedHeartArea("");
+      return;
+    }
 
     // Mark this area as completed and store mock result
     const newCompletedRecordings = {
@@ -168,6 +200,7 @@ function QuickScanPage(): JSX.Element {
   };
 
   const handleReset = (): void => {
+    stopMicrophone();
     setIsRecording(false);
     setRecordingTime(0);
     setCurrentStep(0);
@@ -681,19 +714,38 @@ function QuickScanPage(): JSX.Element {
             </p>
           </div>
 
+          {/* Audio Error Alert */}
+          {audioError && (
+            <Alert
+              type="error"
+              showIcon
+              closable
+              onClose={clearError}
+              message="Microphone access required"
+              description={audioError}
+              className="mb-4 text-left"
+            />
+          )}
+
           {/* Recording Visualizer and Timer */}
           <div className="flex flex-col items-center mb-8">
             <div className="recording-visualizer mb-6">
-              <div className={`heart-icon ${isRecording ? "beating" : ""}`}>
-                <span style={{ fontSize: "4rem", display: "block" }}>
-                  🫀
-                </span>
+              <div style={{ border: '1px solid white', minHeight: '180px', width: '520px' }}>
+                <AudioWaveform isActive={isRecording} analyser={analyser} />
               </div>
-              {isRecording && (
-                <div className="sound-waves">
-                  <div className="wave wave1"></div>
-                  <div className="wave wave2"></div>
-                  <div className="wave wave3"></div>
+              {/* Debug info */}
+              <div className="text-white text-xs mt-2">
+                Debug: isActive={isRecording.toString()}, analyser={analyser ? 'exists' : 'null'}
+              </div>
+              {/* Fallback display for debugging */}
+              {!analyser && !isRecording && (
+                <div className="text-white/60 text-sm mt-2">
+                  Microphone ready - click record to start
+                </div>
+              )}
+              {!analyser && isRecording && (
+                <div className="text-yellow-400 text-sm mt-2">
+                  Starting microphone...
                 </div>
               )}
             </div>
