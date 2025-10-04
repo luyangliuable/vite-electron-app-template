@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 interface GlassButtonProps {
-  children: ReactNode;
+  children?: ReactNode;
   onClick?: () => void;
   variant?: "primary" | "secondary" | "danger" | "success";
   size?: "sm" | "md" | "lg";

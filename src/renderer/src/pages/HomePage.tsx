@@ -46,11 +46,8 @@ function HomePage(): JSX.Element {
         <div className="mb-12 text-center">
           <div className="flex items-center justify-center mb-8">
             <div
-              className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border"
+              className="bg-white/5 backdrop-blur-md rounded-2xl p-6"
               style={{
-                borderColor: "#ACACE6",
-                boxShadow:
-                  "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 30px rgba(255, 255, 255, 0.05) inset",
               }}
             >
               <img
@@ -110,11 +107,8 @@ function HomePage(): JSX.Element {
         {/* Footer message */}
         <div className="max-w-2xl mx-auto">
           <div
-            className="bg-white/2 backdrop-blur-md rounded-xl p-6 border"
+            className="bg-white/2 backdrop-blur-md rounded-xl p-6"
             style={{
-              borderColor: "#ACACE6",
-              boxShadow:
-                "0 4px 16px rgba(0, 0, 0, 0.15), 0 0 20px rgba(255, 255, 255, 0.03) inset",
             }}
           >
             <div className="flex items-center justify-center gap-2 mb-3">
@@ -123,7 +117,7 @@ function HomePage(): JSX.Element {
                 style={{ backgroundColor: "#8C7DD1" }}
               ></div>
               <span className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                Trusted Healthcare Technology
+                What we do
               </span>
               <div
                 className="w-1.5 h-1.5 rounded-full"
@@ -131,10 +125,9 @@ function HomePage(): JSX.Element {
               ></div>
             </div>
             <p className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? 'text-white/90' : 'text-slate-600'}`}>
-              Rheumatic heart disease is a preventable and manageable condition
-              that has been treatable for over 70 years. Our FDA-compliant
-              analysis platform helps healthcare providers deliver precise
-              diagnostics and better patient outcomes.
+              Rheumatic heart disease is a preventable and manageable disease. It affects 40.5 million people worldwide.
+              We built a low-cost device to capture heart sounds and algorithms to analyse those sounds, Allowing valvular disease to be detected by anyone, anywhere.
+              Sonorus aims to eradicated Rheumatic heart disease.
             </p>
           </div>
         </div>

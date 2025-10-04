@@ -11,13 +11,10 @@ interface Patient {
   name: string;
   dob: string;
   gender: string;
+  nationality: string
   height: string;
-  weight: string;
-  bloodType: string;
-  allergies: string;
   conditions: string;
   medications: string;
-  surgeries: string;
   recordings: Recording[];
 }
 
@@ -38,12 +35,9 @@ const mockPatients: Patient[] = [
     dob: "01/01/1990",
     gender: "Male",
     height: "180cm",
-    weight: "75kg",
-    bloodType: "O+",
-    allergies: "None",
     conditions: "None",
     medications: "None",
-    surgeries: "None",
+    nationality: "Australian",
     recordings: [
       {
         id: 1,
@@ -71,12 +65,9 @@ const mockPatients: Patient[] = [
     dob: "15/03/1985",
     gender: "Female",
     height: "165cm",
-    weight: "62kg",
-    bloodType: "A-",
-    allergies: "Penicillin",
     conditions: "Hypertension",
     medications: "Lisinopril 10mg",
-    surgeries: "Appendectomy (2010)",
+    nationality: "Korean",
     recordings: [
       {
         id: 3,
@@ -95,12 +86,9 @@ const mockPatients: Patient[] = [
     dob: "22/11/1978",
     gender: "Male",
     height: "175cm",
-    weight: "80kg",
-    bloodType: "B+",
-    allergies: "None",
     conditions: "Diabetes Type 2",
     medications: "Metformin 500mg",
-    surgeries: "None",
+    nationality: "Australian",
     recordings: []
   }
 ];
@@ -235,28 +223,18 @@ function PatientSelect(): JSX.Element {
                   <p className="info-label">Date of Birth</p>
                   <p className="info-value">{selectedPatient.dob}</p>
                 </div>
-
                 <div className="info-item">
                   <p className="info-label">Height</p>
                   <p className="info-value">{selectedPatient.height}</p>
                 </div>
 
-                <div className="info-item">
-                  <p className="info-label">Blood Type</p>
-                  <p className="info-value">{selectedPatient.bloodType}</p>
-                </div>
               </div>
-
               <div className="info-section">
                 <div className="info-item">
                   <p className="info-label">Gender</p>
                   <p className="info-value">{selectedPatient.gender}</p>
                 </div>
 
-                <div className="info-item">
-                  <p className="info-label">Weight</p>
-                  <p className="info-value">{selectedPatient.weight}</p>
-                </div>
               </div>
             </div>
           )}
@@ -272,11 +250,6 @@ function PatientSelect(): JSX.Element {
               <div className="info-grid">
                 <div className="info-section">
                   <div className="info-item">
-                    <p className="info-label">Allergies</p>
-                    <p className="info-value">{selectedPatient.allergies}</p>
-                  </div>
-
-                  <div className="info-item">
                     <p className="info-label">Conditions</p>
                     <p className="info-value">{selectedPatient.conditions}</p>
                   </div>
@@ -286,11 +259,6 @@ function PatientSelect(): JSX.Element {
                   <div className="info-item">
                     <p className="info-label">Medications</p>
                     <p className="info-value">{selectedPatient.medications}</p>
-                  </div>
-
-                  <div className="info-item">
-                    <p className="info-label">Surgeries</p>
-                    <p className="info-value">{selectedPatient.surgeries}</p>
                   </div>
                 </div>
               </div>

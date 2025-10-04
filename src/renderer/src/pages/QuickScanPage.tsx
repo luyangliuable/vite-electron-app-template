@@ -7,7 +7,7 @@ import {
   WifiOutlined,
   CheckCircleOutlined,
   PlusOutlined,
-  DeleteOutlined
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useLocation } from "react-router-dom";
 import GlassCard from "../components/GlassCard";
@@ -17,6 +17,7 @@ import useMicrophoneAnalyser from "../hooks/useMicrophoneAnalyser";
 import Title from "antd/es/typography/Title";
 import "./QuickScan.css";
 import "../styles/theme.css";
+import HeartDiagram from "@renderer/components/HeartLocationDiagram";
 
 const { Step } = Steps;
 const { Option } = Select;
@@ -29,8 +30,8 @@ interface HeartArea {
 
 interface SkinBarrier {
   id: string;
-  type: 'stickers' | 'scars' | 'fat';
-  severity: 'mild' | 'moderate' | 'severe';
+  type: "stickers" | "scars" | "fat" | "hair";
+  severity: "mild" | "moderate" | "severe";
 }
 
 const heartAreas: HeartArea[] = [
@@ -38,26 +39,26 @@ const heartAreas: HeartArea[] = [
     key: "aortic",
     label: "Aortic Valve",
     description: "2nd intercostal space, right sternal border",
-    icon: ""
+    icon: "",
   },
   {
     key: "pulmonary",
     label: "Pulmonary Valve",
     description: "2nd intercostal space, left sternal border",
-    icon: ""
+    icon: "",
   },
   {
     key: "tricuspid",
     label: "Tricuspid Valve",
     description: "4th intercostal space, left sternal border",
-    icon: ""
+    icon: "",
   },
   {
     key: "mitral",
     label: "Mitral Valve",
     description: "5th intercostal space, apex",
-    icon: ""
-  }
+    icon: "",
+  },
 ];
 
 function QuickScanPage(): JSX.Element {
@@ -68,13 +69,12 @@ function QuickScanPage(): JSX.Element {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [selectedHeartArea, setSelectedHeartArea] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
-  const [completedRecordings, setCompletedRecordings] = useState<Record<string, boolean>>({
-    aortic: false,
-    pulmonary: false,
-    tricuspid: false,
-    mitral: false
-  });
-  const [recordingResults, setRecordingResults] = useState<Record<string, any>>({});
+  const [completedRecordings, setCompletedRecordings] = useState<
+    Record<string, boolean>
+  >({ aortic: false, pulmonary: false, tricuspid: false, mitral: false });
+  const [recordingResults, setRecordingResults] = useState<Record<string, any>>(
+    {},
+  );
   const [skinBarriers, setSkinBarriers] = useState<SkinBarrier[]>([]);
   const [currentSection, setCurrentSection] = useState(0);
   const {
@@ -164,13 +164,15 @@ function QuickScanPage(): JSX.Element {
     // Mark this area as completed and store mock result
     const newCompletedRecordings = {
       ...completedRecordings,
-      [currentArea]: true
+      [currentArea]: true,
     };
 
     setCompletedRecordings(newCompletedRecordings);
 
+    console.log(selectedHeartArea);
+
     // Store mock recording result with skin barrier data
-    setRecordingResults(prev => ({
+    setRecordingResults((prev) => ({
       ...prev,
       [currentArea]: {
         duration: recordingTime,
@@ -178,25 +180,27 @@ function QuickScanPage(): JSX.Element {
         rhythm: Math.random() > 0.8 ? "Irregular" : "Regular",
         quality: Math.random() > 0.7 ? "Poor" : "Good",
         timestamp: new Date().toISOString(),
-        skinBarriers: skinBarriers
-      }
+        skinBarriers: skinBarriers,
+      },
     }));
 
     // Reset selection for next recording
-    setSelectedHeartArea("");
+    // setSelectedHeartArea("");
 
     // Check if all areas are completed - but don't auto-start analysis
-    const allCompleted = Object.values(newCompletedRecordings).every(completed => completed);
+    const allCompleted = Object.values(newCompletedRecordings).every(
+      (completed) => completed,
+    );
 
     // Don't automatically start analysis - let user decide when to analyze
-    // if (allCompleted) {
-    //   setCurrentStep(1);
-    //   // Start comprehensive analysis
-    //   setTimeout(() => {
-    //     setCurrentStep(2);
-    //     setAnalysisComplete(true);
-    //   }, 4000);
-    // }
+    if (allCompleted) {
+      setCurrentStep(1);
+      // Start comprehensive analysis
+      setTimeout(() => {
+        setCurrentStep(2);
+        setAnalysisComplete(true);
+      }, 4000);
+    }
   };
 
   const handleReset = (): void => {
@@ -210,7 +214,7 @@ function QuickScanPage(): JSX.Element {
       aortic: false,
       pulmonary: false,
       tricuspid: false,
-      mitral: false
+      mitral: false,
     });
     setRecordingResults({});
     setSkinBarriers([]);
@@ -220,7 +224,12 @@ function QuickScanPage(): JSX.Element {
 
   // Auto advance to step 1 when heart area is selected
   useEffect(() => {
-    if (selectedHeartArea && currentStep === 0 && !isRecording && !analysisComplete) {
+    if (
+      selectedHeartArea &&
+      currentStep === 0 &&
+      !isRecording &&
+      !analysisComplete
+    ) {
       // Stay on step 0 until user manually proceeds
     }
   }, [selectedHeartArea, currentStep, isRecording, analysisComplete]);
@@ -234,20 +243,22 @@ function QuickScanPage(): JSX.Element {
   const scrollToSection = (sectionIndex: number): void => {
     const section = document.getElementById(`section-${sectionIndex}`);
     if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
+      section.scrollIntoView({ behavior: "smooth" });
       setCurrentSection(sectionIndex);
     }
   };
 
   const addSkinBarrier = (): void => {
-    // Check if we already have 3 barriers (max: stickers, scars, fat)
-    if (skinBarriers.length >= 3) {
+    // Check if we already have 3 barriers (max: stickers, scars, fat, hair)
+    if (skinBarriers.length >= 4) {
       return;
     }
 
     // Find the first available type
-    const existingTypes = skinBarriers.map(barrier => barrier.type);
-    const availableTypes = ['stickers', 'scars', 'fat'].filter(type => !existingTypes.includes(type as any));
+    const existingTypes = skinBarriers.map((barrier) => barrier.type);
+    const availableTypes = ["stickers", "scars", "fat", "hair"].filter(
+      (type) => !existingTypes.includes(type as any),
+    );
 
     if (availableTypes.length === 0) {
       return; // All types already exist
@@ -255,39 +266,47 @@ function QuickScanPage(): JSX.Element {
 
     const newBarrier: SkinBarrier = {
       id: `barrier-${Date.now()}`,
-      type: availableTypes[0] as 'stickers' | 'scars' | 'fat',
-      severity: 'mild'
+      type: availableTypes[0] as "stickers" | "scars" | "fat" | "hair",
+      severity: "mild",
     };
-    setSkinBarriers(prev => [...prev, newBarrier]);
+    setSkinBarriers((prev) => [...prev, newBarrier]);
   };
 
-  const getAvailableTypes = (currentBarrierId?: string): ('stickers' | 'scars' | 'fat')[] => {
+  const getAvailableTypes = (
+    currentBarrierId?: string,
+  ): ("stickers" | "scars" | "fat")[] => {
     const existingTypes = skinBarriers
-      .filter(barrier => barrier.id !== currentBarrierId)
-      .map(barrier => barrier.type);
-    return ['stickers', 'scars', 'fat'].filter(type => !existingTypes.includes(type));
+      .filter((barrier) => barrier.id !== currentBarrierId)
+      .map((barrier) => barrier.type);
+    return ["stickers", "scars", "fat", "hair"].filter(
+      (type) => !existingTypes.includes(type),
+    );
   };
 
   const removeSkinBarrier = (id: string): void => {
-    setSkinBarriers(prev => prev.filter(barrier => barrier.id !== id));
+    setSkinBarriers((prev) => prev.filter((barrier) => barrier.id !== id));
   };
 
-  const updateSkinBarrier = (id: string, field: 'type' | 'severity', value: string): void => {
-    if (field === 'type') {
+  const updateSkinBarrier = (
+    id: string,
+    field: "type" | "severity",
+    value: string,
+  ): void => {
+    if (field === "type") {
       // Check if this type is already used by another barrier
       const existingBarrierWithType = skinBarriers.find(
-        barrier => barrier.id !== id && barrier.type === value
+        (barrier) => barrier.id !== id && barrier.type === value,
       );
       if (existingBarrierWithType) {
         return; // Don't allow duplicate types
       }
     }
 
-    setSkinBarriers(prev => prev.map(barrier =>
-      barrier.id === id
-        ? { ...barrier, [field]: value }
-        : barrier
-    ));
+    setSkinBarriers((prev) =>
+      prev.map((barrier) =>
+        barrier.id === id ? { ...barrier, [field]: value } : barrier,
+      ),
+    );
   };
 
   // Detect current section on scroll
@@ -305,26 +324,30 @@ function QuickScanPage(): JSX.Element {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <div className="quick-scan-container">
-
       {/* Section 1: Skin Barriers Configuration */}
       <section id="section-0" className="snap-section section-1">
-        <GlassCard padding="lg" className="w-full max-w-3xl max-h-[80vh] flex flex-col">
+        <GlassCard
+          padding="lg"
+          className="w-full max-w-3xl max-h-[80vh] flex flex-col"
+        >
           <div className="text-center mb-4 flex-shrink-0">
-            <Title level={2} style={{ color: 'white', margin: 0 }}>
+            <Title level={2} style={{ color: "white", margin: 0 }}>
               Skin Barriers Configuration
             </Title>
-            <p className="text-white/70 text-lg mt-2">
-              Configure skin barriers that may affect recording quality across all heart valve areas
+            <p className="text-white/70 text-sm mt-2">
+              Skin barriers are anything that may affect recording quality
+              across all heart valve areas
             </p>
             {skinBarriers.length === 0 && (
               <p className="text-white/60 text-sm mt-3">
-                No skin barriers configured. Add barriers that may affect recording quality.
+                No skin barriers configured. Add barriers that may affect
+                recording quality.
               </p>
             )}
           </div>
@@ -334,36 +357,38 @@ function QuickScanPage(): JSX.Element {
             {/* Existing Skin Barriers */}
             {skinBarriers.length > 0 && (
               <div className="mb-4 flex-1 min-h-0">
-                <h3 className="text-white font-medium text-center mb-4 flex-shrink-0">
+                {/* <h3 className="text-white font-medium text-center mb-4 flex-shrink-0">
                   Active Skin Barriers ({skinBarriers.length})
-                </h3>
+                </h3> */}
                 <div className="max-h-80 space-y-3 px-2 pr-3 skin-barriers-scroll">
                   {skinBarriers.map((barrier, index) => (
-                    <div key={barrier.id} className="p-4 rounded-lg bg-white/10 border border-white/20 flex-shrink-0">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                          {index + 1}
-                        </div>
-
+                    <div
+                      key={barrier.id}
+                      className="p-4 rounded-lg bg-white/10 border border-white/20 flex-shrink-0"
+                    >
+                      <div className="flex items-end gap-4">
                         <div className="flex-1 min-w-0">
                           <label className="block text-white/80 text-sm font-medium mb-2">
                             Barrier Type
                           </label>
                           <Select
                             value={barrier.type}
-                            onChange={(value) => updateSkinBarrier(barrier.id, 'type', value)}
+                            onChange={(value) =>
+                              updateSkinBarrier(barrier.id, "type", value)
+                            }
                             className="w-full"
                             size="large"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
                           >
                             {/* Current type is always available */}
                             <Option value={barrier.type}>
-                              {barrier.type.charAt(0).toUpperCase() + barrier.type.slice(1)}
+                              {barrier.type.charAt(0).toUpperCase() +
+                                barrier.type.slice(1)}
                             </Option>
                             {/* Show other available types */}
                             {getAvailableTypes(barrier.id)
-                              .filter(type => type !== barrier.type)
-                              .map(type => (
+                              .filter((type) => type !== barrier.type)
+                              .map((type) => (
                                 <Option key={type} value={type}>
                                   {type.charAt(0).toUpperCase() + type.slice(1)}
                                 </Option>
@@ -377,10 +402,12 @@ function QuickScanPage(): JSX.Element {
                           </label>
                           <Select
                             value={barrier.severity}
-                            onChange={(value) => updateSkinBarrier(barrier.id, 'severity', value)}
+                            onChange={(value) =>
+                              updateSkinBarrier(barrier.id, "severity", value)
+                            }
                             className="w-full"
                             size="large"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
                           >
                             <Option value="mild">Mild</Option>
                             <Option value="moderate">Moderate</Option>
@@ -394,16 +421,8 @@ function QuickScanPage(): JSX.Element {
                             size="sm"
                             icon={<DeleteOutlined />}
                             onClick={() => removeSkinBarrier(barrier.id)}
-                          >
-                            Remove
-                          </GlassButton>
+                          ></GlassButton>
                         </div>
-                      </div>
-
-                      <div className="mt-3 text-center">
-                        <span className="text-yellow-400 text-sm">
-                          ⚠️ {barrier.severity.charAt(0).toUpperCase() + barrier.severity.slice(1)} {barrier.type} - affects recording quality
-                        </span>
                       </div>
                     </div>
                   ))}
@@ -412,25 +431,25 @@ function QuickScanPage(): JSX.Element {
             )}
 
             {/* Add New Barrier */}
-            <div className="text-center flex-shrink-0 mb-3">
+            <div className="text-center flex-shrink-0 mb-3 flex flex-col items-center">
               <GlassButton
-                variant="primary"
-                size="lg"
+                variant="secondary"
                 icon={<PlusOutlined />}
                 onClick={addSkinBarrier}
-                disabled={skinBarriers.length >= 3}
+                disabled={skinBarriers.length >= 4}
               >
                 Add Skin Barrier
               </GlassButton>
-              {skinBarriers.length >= 3 && (
+              {skinBarriers.length >= 4 && (
                 <p className="text-white/60 text-sm mt-2">
-                  Maximum barriers reached. You have all available barrier types (stickers, scars, fat).
+                  Maximum barriers reached. You have all available barrier types
+                  (stickers, scars, fat, hair).
                 </p>
               )}
             </div>
           </div>
 
-          <div className="text-center mt-2">
+          <div className="text-center mt-2 flex justify-end">
             <GlassButton
               variant="primary"
               size="lg"
@@ -446,16 +465,16 @@ function QuickScanPage(): JSX.Element {
       <section id="section-1" className="snap-section section-2">
         <GlassCard padding="lg" className="w-full max-w-4xl">
           <div className="text-center mb-6">
-            <Title level={2} style={{ color: 'white', margin: 0 }}>
+            <Title level={2} style={{ color: "white", margin: 0 }}>
               Choose Heart Location
             </Title>
-            <p className="text-white/70 text-lg mt-2">
+            <p className="text-white/70 text-sm mt-2">
               Select the heart valve area to record
             </p>
           </div>
 
           {/* Progress indicator */}
-          <div className="mb-6 text-center">
+          {/* <div className="mb-6 text-center">
             <div className="flex items-center justify-center gap-3">
               <span className="text-white/60">Progress:</span>
               <div className="flex gap-2">
@@ -478,152 +497,41 @@ function QuickScanPage(): JSX.Element {
                 {Object.values(completedRecordings).filter(Boolean).length}/4 completed
               </span>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex flex-col lg:flex-row gap-6 items-center justify-center mb-6">
             {/* Interactive Chest Diagram */}
             <div className="relative">
-              <svg
-                width="280"
-                height="380"
-                viewBox="0 0 320 450"
-                className="chest-diagram"
-              >
-                {/* Shoulder line */}
-                <path
-                  d="M50 80 C80 70, 120 65, 160 65 C200 65, 240 70, 270 80"
-                  fill="none"
-                  stroke="#ACACE6"
-                  strokeWidth="2"
-                />
-
-                {/* Chest outline - more anatomical */}
-                <path
-                  d="M50 80
-                     L70 120
-                     C75 180, 80 240, 85 300
-                     C90 350, 110 380, 160 385
-                     C210 380, 230 350, 235 300
-                     C240 240, 245 180, 250 120
-                     L270 80"
-                  fill="rgba(255,255,255,0.05)"
-                  stroke="#ACACE6"
-                  strokeWidth="2"
-                />
-
-                {/* Clavicles (collar bones) */}
-                <path
-                  d="M90 85 C120 80, 140 82, 160 85"
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <path
-                  d="M160 85 C180 82, 200 80, 230 85"
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-
-                {/* Sternum (breastbone) */}
-                <rect
-                  x="155"
-                  y="100"
-                  width="10"
-                  height="180"
-                  fill="rgba(255,255,255,0.2)"
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="1"
-                  rx="5"
-                />
-
-                {/* Rib cage - more realistic curved ribs */}
-                <path d="M100 120 C130 115, 190 115, 220 120" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-                <path d="M95 140 C130 135, 190 135, 225 140" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-                <path d="M90 160 C130 155, 190 155, 230 160" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-                <path d="M95 180 C130 175, 190 175, 225 180" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-                <path d="M100 200 C130 195, 190 195, 220 200" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-                <path d="M105 220 C130 215, 190 215, 215 220" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none"/>
-
-                {/* Nipple landmarks */}
-                <circle cx="125" cy="180" r="3" fill="rgba(255,255,255,0.4)"/>
-                <circle cx="195" cy="180" r="3" fill="rgba(255,255,255,0.4)"/>
-
-                {/* Aortic Area - 2nd intercostal space, right sternal border */}
-                <circle
-                  cx="185"
-                  cy="140"
-                  r="18"
-                  fill={completedRecordings.aortic ? '#10b981' : selectedHeartArea === 'aortic' ? '#8C7DD1' : 'rgba(255,255,255,0.25)'}
-                  stroke={completedRecordings.aortic ? '#059669' : selectedHeartArea === 'aortic' ? '#ACACE6' : '#888'}
-                  strokeWidth="2"
-                  className={`${completedRecordings.aortic ? '' : 'cursor-pointer'} transition-all duration-300 hover:opacity-80`}
-                  onClick={() => !completedRecordings.aortic && setSelectedHeartArea('aortic')}
-                />
-                <text x="185" y="145" textAnchor="middle" className="fill-white text-sm font-bold pointer-events-none select-none">
-                  {completedRecordings.aortic ? '✓' : 'A'}
-                </text>
-
-                {/* Pulmonary Area - 2nd intercostal space, left sternal border */}
-                <circle
-                  cx="135"
-                  cy="140"
-                  r="18"
-                  fill={completedRecordings.pulmonary ? '#10b981' : selectedHeartArea === 'pulmonary' ? '#8C7DD1' : 'rgba(255,255,255,0.25)'}
-                  stroke={completedRecordings.pulmonary ? '#059669' : selectedHeartArea === 'pulmonary' ? '#ACACE6' : '#888'}
-                  strokeWidth="2"
-                  className={`${completedRecordings.pulmonary ? '' : 'cursor-pointer'} transition-all duration-300 hover:opacity-80`}
-                  onClick={() => !completedRecordings.pulmonary && setSelectedHeartArea('pulmonary')}
-                />
-                <text x="135" y="145" textAnchor="middle" className="fill-white text-sm font-bold pointer-events-none select-none">
-                  {completedRecordings.pulmonary ? '✓' : 'P'}
-                </text>
-
-                {/* Tricuspid Area - 4th intercostal space, left sternal border */}
-                <circle
-                  cx="135"
-                  cy="180"
-                  r="18"
-                  fill={completedRecordings.tricuspid ? '#10b981' : selectedHeartArea === 'tricuspid' ? '#8C7DD1' : 'rgba(255,255,255,0.25)'}
-                  stroke={completedRecordings.tricuspid ? '#059669' : selectedHeartArea === 'tricuspid' ? '#ACACE6' : '#888'}
-                  strokeWidth="2"
-                  className={`${completedRecordings.tricuspid ? '' : 'cursor-pointer'} transition-all duration-300 hover:opacity-80`}
-                  onClick={() => !completedRecordings.tricuspid && setSelectedHeartArea('tricuspid')}
-                />
-                <text x="135" y="185" textAnchor="middle" className="fill-white text-sm font-bold pointer-events-none select-none">
-                  {completedRecordings.tricuspid ? '✓' : 'T'}
-                </text>
-
-                {/* Mitral Area - 5th intercostal space, apex (mid-clavicular line) */}
-                <circle
-                  cx="125"
-                  cy="200"
-                  r="18"
-                  fill={completedRecordings.mitral ? '#10b981' : selectedHeartArea === 'mitral' ? '#8C7DD1' : 'rgba(255,255,255,0.25)'}
-                  stroke={completedRecordings.mitral ? '#059669' : selectedHeartArea === 'mitral' ? '#ACACE6' : '#888'}
-                  strokeWidth="2"
-                  className={`${completedRecordings.mitral ? '' : 'cursor-pointer'} transition-all duration-300 hover:opacity-80`}
-                  onClick={() => !completedRecordings.mitral && setSelectedHeartArea('mitral')}
-                />
-                <text x="125" y="205" textAnchor="middle" className="fill-white text-sm font-bold pointer-events-none select-none">
-                  {completedRecordings.mitral ? '✓' : 'M'}
-                </text>
-              </svg>
+              <HeartDiagram
+                selectedHeartArea={selectedHeartArea}
+                completedRecordings={completedRecordings}
+                onAreaClick={(area) => {
+                  // Only allow selection if the area is not already completed
+                  if (!completedRecordings[area]) {
+                    setSelectedHeartArea(area);
+                  }
+                }}
+              />
             </div>
 
             {/* Legend and Selection Info */}
             <div className="space-y-3">
-              <div className="text-white font-medium text-sm mb-2">Heart Valve Areas:</div>
+              <div className="text-white font-medium text-sm mb-2">
+                Heart Valve Areas:
+              </div>
 
               {/* Active Skin Barriers Status */}
-              {skinBarriers.length > 0 && (
+              {/* {skinBarriers.length > 0 && (
                 <div className="p-3 mb-3 rounded-lg bg-yellow-500/20 border border-yellow-500/40 max-h-32 flex flex-col">
                   <div className="text-yellow-400 text-xs font-medium mb-2 flex-shrink-0">
                     Active Skin Barriers ({skinBarriers.length}):
                   </div>
                   <div className="space-y-1 overflow-y-auto flex-1 skin-barriers-scroll pr-2">
                     {skinBarriers.map((barrier, index) => (
-                      <div key={barrier.id} className="text-yellow-300/80 text-xs flex-shrink-0">
+                      <div
+                        key={barrier.id}
+                        className="text-yellow-300/80 text-xs flex-shrink-0"
+                      >
                         {index + 1}. {barrier.severity} {barrier.type}
                       </div>
                     ))}
@@ -632,39 +540,48 @@ function QuickScanPage(): JSX.Element {
                     Applied to all heart valve recordings
                   </div>
                 </div>
-              )}
+              )} */}
               {heartAreas.map((area) => (
                 <div
                   key={area.key}
                   className={`p-2 rounded-lg border transition-all duration-300 ${
                     completedRecordings[area.key]
-                      ? 'bg-green-500/20 border-green-500/40'
+                      ? "bg-green-500/20 border-green-500/40"
                       : selectedHeartArea === area.key
-                      ? 'bg-white/20 border-white/40 cursor-pointer'
-                      : 'bg-white/10 border-white/20 cursor-pointer hover:bg-white/15'
+                        ? "bg-white/20 border-white/40 cursor-pointer"
+                        : "bg-white/10 border-white/20 cursor-pointer hover:bg-white/15"
                   }`}
-                  onClick={() => !completedRecordings[area.key] && setSelectedHeartArea(area.key)}
+                  onClick={() =>
+                    !completedRecordings[area.key] &&
+                    setSelectedHeartArea(area.key)
+                  }
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-6 h-6 rounded-full flex items-center justify-center font-medium text-xs ${
                         completedRecordings[area.key]
-                          ? 'bg-green-500 text-white'
+                          ? "bg-green-500 text-white"
                           : selectedHeartArea === area.key
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-white/20 text-white/70'
+                            ? "bg-purple-500 text-white"
+                            : "bg-white/20 text-white/70"
                       }`}
                     >
-                      {completedRecordings[area.key] ? '✓' : area.key.charAt(0).toUpperCase()}
+                      {completedRecordings[area.key]
+                        ? "✓"
+                        : area.key.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <div className="text-white font-medium">{area.label}</div>
+                        <div className="text-white font-medium">
+                          {area.label}
+                        </div>
                         {completedRecordings[area.key] && (
-                          <span className="text-green-400 text-xs">Completed</span>
+                          <span className="text-green-400 text-xs">
+                            Completed
+                          </span>
                         )}
                       </div>
-                      <div className="text-white/60 text-sm">{area.description}</div>
+                      {/* <div className="text-white/60 text-sm">{area.description}</div> */}
                       {recordingResults[area.key] && (
                         <div className="text-xs text-white/50 mt-1">
                           Duration: {recordingResults[area.key].duration}s
@@ -678,7 +595,7 @@ function QuickScanPage(): JSX.Element {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-between">
             <GlassButton
               variant="secondary"
               size="lg"
@@ -693,8 +610,8 @@ function QuickScanPage(): JSX.Element {
               disabled={!selectedHeartArea}
             >
               {selectedHeartArea
-                ? `Next: Record ${heartAreas.find(area => area.key === selectedHeartArea)?.label}`
-                : 'Select Heart Area First'}
+                ? `Next: Record ${heartAreas.find((area) => area.key === selectedHeartArea)?.label}`
+                : "Select Heart Area First"}
             </GlassButton>
           </div>
         </GlassCard>
@@ -704,12 +621,12 @@ function QuickScanPage(): JSX.Element {
       <section id="section-2" className="snap-section section-3">
         <GlassCard padding="lg" className="w-full max-w-3xl">
           <div className="text-center mb-6">
-            <Title level={2} style={{ color: 'white', margin: 0 }}>
+            <Title level={2} style={{ color: "white", margin: 0 }}>
               Record Heart Sounds
             </Title>
             <p className="text-white/70 text-lg mt-2">
               {selectedHeartArea
-                ? `Recording ${heartAreas.find(area => area.key === selectedHeartArea)?.label} area`
+                ? `${heartAreas.find((area) => area.key === selectedHeartArea)?.label}`
                 : "Ready to record when you select a heart area"}
             </p>
           </div>
@@ -730,13 +647,20 @@ function QuickScanPage(): JSX.Element {
           {/* Recording Visualizer and Timer */}
           <div className="flex flex-col items-center mb-8">
             <div className="recording-visualizer mb-6">
-              <div style={{ border: '1px solid white', minHeight: '180px', width: '520px' }}>
+              <div
+                style={{
+                  border: "1px solid white",
+                  minHeight: "180px",
+                  width: "520px",
+                }}
+              >
                 <AudioWaveform isActive={isRecording} analyser={analyser} />
               </div>
               {/* Debug info */}
-              <div className="text-white text-xs mt-2">
-                Debug: isActive={isRecording.toString()}, analyser={analyser ? 'exists' : 'null'}
-              </div>
+              {/* <div className="text-white text-xs mt-2">
+                Debug: isActive={isRecording.toString()}, analyser=
+                {analyser ? "exists" : "null"}
+              </div> */}
               {/* Fallback display for debugging */}
               {!analyser && !isRecording && (
                 <div className="text-white/60 text-sm mt-2">
@@ -782,12 +706,16 @@ function QuickScanPage(): JSX.Element {
                 size="lg"
                 icon={<PlayCircleOutlined />}
                 onClick={handleStartRecording}
-                disabled={!selectedHeartArea}
+                disabled={
+                  !selectedHeartArea || completedRecordings[selectedHeartArea]
+                }
                 className="mb-4"
               >
-                {selectedHeartArea
+                {selectedHeartArea && !completedRecordings[selectedHeartArea]
                   ? `Start Recording`
-                  : 'Go back and select a heart area first'}
+                  : completedRecordings[selectedHeartArea]
+                    ? "Recording Complete"
+                    : "Please select a heart area to record"}
               </GlassButton>
             )}
 
@@ -803,21 +731,22 @@ function QuickScanPage(): JSX.Element {
               </GlassButton>
             )}
 
-            {Object.values(completedRecordings).filter(Boolean).length === 4 && !analysisComplete && (
-              <div className="mb-4">
-                <p className="text-green-400 text-lg mb-4">
-                  ✓ All 4 areas recorded!
-                </p>
-                <GlassButton
-                  variant="success"
-                  size="lg"
-                  onClick={() => setCurrentStep(1)}
-                  className="mb-4"
-                >
-                  Start Comprehensive Analysis
-                </GlassButton>
-              </div>
-            )}
+            {Object.values(completedRecordings).filter(Boolean).length === 4 &&
+              !analysisComplete && (
+                <div className="mb-4">
+                  <p className="text-green-400 text-lg mb-4">
+                    ✓ All 4 areas recorded!
+                  </p>
+                  <GlassButton
+                    variant="success"
+                    size="lg"
+                    onClick={() => setCurrentStep(1)}
+                    className="mb-4"
+                  >
+                    Start Comprehensive Analysis
+                  </GlassButton>
+                </div>
+              )}
 
             {analysisComplete && (
               <div className="text-center">
@@ -833,11 +762,14 @@ function QuickScanPage(): JSX.Element {
                   {skinBarriers.length > 0 && (
                     <div className="mb-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
                       <div className="text-yellow-400 text-sm font-medium mb-2">
-                        Skin Barriers Applied During Recording:
+                        Active Skin Barriers:
                       </div>
                       <div className="space-y-1">
                         {skinBarriers.map((barrier, index) => (
-                          <div key={barrier.id} className="text-yellow-300/80 text-sm">
+                          <div
+                            key={barrier.id}
+                            className="text-yellow-300/80 text-sm"
+                          >
                             {index + 1}. {barrier.severity} {barrier.type}
                           </div>
                         ))}
@@ -846,7 +778,10 @@ function QuickScanPage(): JSX.Element {
                   )}
 
                   <p className="text-green-400 text-lg">
-                    ✓ {Math.random() > 0.7 ? "Minor irregularities detected - recommend follow-up" : "Normal heart sounds detected"}
+                    ✓{" "}
+                    {Math.random() > 0.7
+                      ? "Minor irregularities detected - recommend follow-up"
+                      : "Normal heart sounds detected"}
                   </p>
                 </div>
                 <GlassButton
@@ -862,22 +797,39 @@ function QuickScanPage(): JSX.Element {
 
           {/* Navigation Buttons */}
           <div className="flex justify-center gap-4">
-            <GlassButton
+            {/* <GlassButton
               variant="secondary"
               size="lg"
               onClick={() => scrollToSection(1)}
             >
               Back: Heart Location
-            </GlassButton>
-            {Object.values(completedRecordings).some(Boolean) && (
-              <GlassButton
-                variant="primary"
-                size="lg"
-                onClick={() => scrollToSection(1)}
-              >
-                Record Another Area
-              </GlassButton>
-            )}
+            </GlassButton> */}
+            {/* <p>{completedRecordings}</p> */}
+            {/* {completedRecordings.map((recording, isCompleted) => (
+              <div>yo</div>
+            ))} */}
+            {/* skinBarriers.map((barrier, index) => ( */}
+            {completedRecordings[selectedHeartArea] &&
+              !Object.values(completedRecordings).every(Boolean) && (
+                <GlassButton
+                  variant="primary"
+                  size="lg"
+                  onClick={() => scrollToSection(1)}
+                >
+                  Next: Choose another heart location
+                </GlassButton>
+              )}
+
+            {!completedRecordings[selectedHeartArea] &&
+              !Object.values(completedRecordings).every(Boolean) && (
+                <GlassButton
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => scrollToSection(1)}
+                >
+                  Back: Choose another heart location
+                </GlassButton>
+              )}
           </div>
         </GlassCard>
       </section>
