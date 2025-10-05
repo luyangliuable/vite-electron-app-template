@@ -42,6 +42,75 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   margin-bottom: 1rem !important;
 }
 
+/* Fixed Patient Information Panel - Right Side */
+.patient-info-section {
+  position: fixed !important;
+  top: 5rem !important; /* Position below navbar */
+  right: 1rem !important; /* Right side with margin */
+  width: 220px !important; /* Thin fixed width */
+  height: auto !important; /* Content-based height */
+  transform: none !important; /* Remove center transform */
+  z-index: 999 !important; /* Below navbar but above content */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove top padding from first section since no header above */
+.quick-scan-container .snap-section:first-of-type {
+  padding-top: 2rem !important; /* Back to normal padding */
+}
+
+/* Patient Details Table Styling */
+.patient-details-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.patient-details-table td.label {
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  font-weight: 500;
+  min-width: 50px;
+}
+
+.patient-details-table td.value {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.25rem 0;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.patient-details-table tr:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Better table borders for light mode */
+@media (prefers-color-scheme: light) {
+  .patient-details-table tr:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  }
+
+  .patient-details-table td.label {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .patient-details-table td.value {
+    color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.patient-details-table td {
+  padding-bottom: 0.375rem;
+  padding-top: 0.375rem;
+}
+
 /* Make all button text smaller on QuickScan page */
 .quick-scan-container .ant-btn,
 .quick-scan-container button {
@@ -356,6 +425,12 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   .snap-section {
     padding: 1rem;
   }
+
+  /* Adjust patient panel for tablets */
+  .patient-info-section {
+    width: 200px !important; /* Slightly narrower on tablets */
+    right: 0.5rem !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -373,6 +448,11 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   .snap-section {
     padding: 0.5rem;
   }
+
+  /* Hide patient panel on mobile to preserve space */
+  .patient-info-section {
+    display: none !important;
+  }
 }
 
 @media (max-height: 600px) {
@@ -380,5 +460,24 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
     padding: 1rem 0.5rem;
     justify-content: flex-start;
     padding-top: 2rem;
+  }
+
+  /* Compact patient panel on short screens */
+  .patient-info-section {
+    top: 4rem !important; /* Closer to navbar */
+    width: 180px !important; /* Narrower on short screens */
+  }
+
+  .patient-info-section .text-xl {
+    font-size: 1rem !important; /* Smaller text on short screens */
+  }
+
+  .patient-details-table {
+    font-size: 0.625rem !important; /* Smaller table text on short screens */
+  }
+
+  .patient-details-table td {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 }

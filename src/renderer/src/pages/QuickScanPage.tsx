@@ -472,22 +472,84 @@ function QuickScanPage(): JSX.Element {
 
   return (
     <div className="quick-scan-container">
-      {/* Patient Information Section - Only show when recording for a specific patient */}
+      {/* Patient Information Panel - Right Side Thin Layout */}
       {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (
-        <section className="patient-info-section mb-6">
-          <GlassCard padding="md" className="w-full max-w-3xl">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+        <section className="patient-info-section">
+          <GlassCard padding="sm" className="w-full">
+            <div className="flex flex-col items-center text-center space-y-3">
+              {/* Avatar */}
+              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                 {selectedPatient.name.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1">
-                <h2 className="text-white text-xl font-semibold mb-1">
+
+              {/* Patient Name */}
+              <div className="px-2">
+                <h3 className="text-white text-xl font-semibold leading-tight break-words">
                   {selectedPatient.name}
-                </h2>
-                <div className="flex gap-6 text-white/70 text-sm">
-                  <span>ID: {selectedPatient.patient_uid}</span>
-                  <span>DOB: {new Date(selectedPatient.dob).toLocaleDateString()}</span>
-                </div>
+                </h3>
+              </div>
+
+              {/* Patient Details Table */}
+              <div className="w-full px-2">
+                <table className="patient-details-table">
+                  <tbody>
+                    <tr>
+                      <td className="label">ID:</td>
+                      <td className="value">{selectedPatient.patient_uid}</td>
+                    </tr>
+                    <tr>
+                      <td className="label">DOB:</td>
+                      <td className="value">{new Date(selectedPatient.dob).toLocaleDateString()}</td>
+                    </tr>
+                    {selectedPatient.patient_details.conditions && selectedPatient.patient_details.conditions.length > 0 && (
+                      <tr>
+                        <td className="label">Conditions:</td>
+                        <td className="value">{selectedPatient.patient_details.conditions.join(", ")}</td>
+                      </tr>
+                    )}
+                    {selectedPatient.patient_details.medications && selectedPatient.patient_details.medications.length > 0 && (
+                      <tr>
+                        <td className="label">Medications:</td>
+                        <td className="value">{selectedPatient.patient_details.medications.join(", ")}</td>
+                      </tr>
+                    )}
+                    {isValidHeartLocation(selectedHeartArea) && (
+                      <tr>
+                        <td className="label">Recording:</td>
+                        <td className="value">
+                          <div className="flex flex-col">
+                            <span>{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                            {completedRecordings[selectedHeartArea] && (
+                              <span className="text-green-400 text-xs">✓ Completed</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    {skinBarriers.length > 0 && (
+                      <tr>
+                        <td className="label">Barriers:</td>
+                        <td className="value">
+                          <div className="space-y-1">
+                            {skinBarriers.map((barrier, index) => (
+                              <div key={barrier.id} className="text-xs leading-tight">
+                                {barrier.level} {barrier.option}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td className="label">Height:</td>
+                      <td className="value">{selectedPatient.patient_details.height > 0 ? `${selectedPatient.patient_details.height}cm` : 'N/A'}</td>
+                    </tr>
+                    <tr>
+                      <td className="label">Weight:</td>
+                      <td className="value">{selectedPatient.patient_details.weight > 0 ? `${selectedPatient.patient_details.weight}kg` : 'N/A'}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </GlassCard>
