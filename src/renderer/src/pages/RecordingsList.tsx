@@ -13,16 +13,19 @@ import {
   ReloadOutlined,
   DeleteOutlined
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import type Recording from "../types/Recording";
+import type RecordingBatch from "../types/RecordingBatch";
+import type Patient from "../types/Patient";
 import type HeartLocation from "../types/HeartLocation";
 import HeartLocationEnum from "../types/HeartLocation";
 import type Label from "../types/Label";
 import LabelEnum from "../types/Label";
-import { getExtendedRecordings, deleteRecording, type ExtendedRecording } from "../utils/storage";
+import { getExtendedRecordings, deleteRecording, deleteRecordingBatch, getGroupedExtendedRecordings, getGroupedRecordingBatches, getPatients, type ExtendedRecording } from "../utils/storage";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -31,14 +34,31 @@ const { Option } = Select;
 
 // Mock recordings removed - now using IndexedDB storage
 
+interface GroupedRecordingData {
+  patients: Record<number, Patient>;
+  batches: Record<number, RecordingBatch[]>;
+  recordings: Record<number, Record<number, ExtendedRecording[]>>;
+}
+
 function RecordingsList(): JSX.Element {
-  const [recordings, setRecordings] = useState<ExtendedRecording[]>([]);
-  const [filteredRecordings, setFilteredRecordings] = useState<ExtendedRecording[]>([]);
+  const navigate = useNavigate();
+  const [groupedData, setGroupedData] = useState<GroupedRecordingData>({
+    patients: {},
+    batches: {},
+    recordings: {}
+  });
+  const [filteredData, setFilteredData] = useState<GroupedRecordingData>({
+    patients: {},
+    batches: {},
+    recordings: {}
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [heartAreaFilter, setHeartAreaFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedPatients, setExpandedPatients] = useState<Set<number>>(new Set());
+  const [expandedBatches, setExpandedBatches] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadRecordings();
@@ -46,13 +66,38 @@ function RecordingsList(): JSX.Element {
 
   useEffect(() => {
     filterRecordings();
-  }, [recordings, searchTerm, statusFilter, heartAreaFilter, dateRange]);
+  }, [groupedData, searchTerm, statusFilter, heartAreaFilter, dateRange]);
 
   const loadRecordings = async () => {
     try {
       setLoading(true);
-      const allRecordings = await getExtendedRecordings();
-      setRecordings(allRecordings);
+      const [patients, groupedBatches, groupedRecordings] = await Promise.all([
+        getPatients(),
+        getGroupedRecordingBatches(),
+        getGroupedExtendedRecordings()
+      ]);
+
+      const patientsMap: Record<number, Patient> = {};
+      patients.forEach(patient => {
+        patientsMap[patient.id] = patient;
+      });
+
+      setGroupedData({
+        patients: patientsMap,
+        batches: groupedBatches,
+        recordings: groupedRecordings
+      });
+
+      // Auto-expand first patient and first batch for better UX
+      const firstPatientId = Object.keys(groupedBatches)[0];
+      if (firstPatientId) {
+        const patientId = parseInt(firstPatientId);
+        setExpandedPatients(new Set([patientId]));
+        const firstBatch = groupedBatches[patientId]?.[0];
+        if (firstBatch) {
+          setExpandedBatches(new Set([firstBatch.id]));
+        }
+      }
     } catch (error) {
       console.error('Error loading recordings:', error);
     } finally {
@@ -61,31 +106,80 @@ function RecordingsList(): JSX.Element {
   };
 
   const filterRecordings = () => {
-    let filtered = recordings;
+    const filteredPatients: Record<number, Patient> = {};
+    const filteredBatches: Record<number, RecordingBatch[]> = {};
+    const filteredRecordingsData: Record<number, Record<number, ExtendedRecording[]>> = {};
 
-    if (searchTerm) {
-      filtered = filtered.filter(recording =>
-        recording.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        recording.location.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    // Apply filters to each patient's recordings
+    Object.entries(groupedData.recordings).forEach(([patientIdStr, patientBatches]) => {
+      const patientId = parseInt(patientIdStr);
+      const patient = groupedData.patients[patientId];
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(recording => recording.status === statusFilter);
-    }
+      if (!patient) return;
 
-    if (heartAreaFilter !== "all") {
-      filtered = filtered.filter(recording => recording.location === heartAreaFilter);
-    }
+      let hasMatchingRecordings = false;
+      const patientFilteredBatches: RecordingBatch[] = [];
+      const patientFilteredRecordings: Record<number, ExtendedRecording[]> = {};
 
-    if (dateRange) {
-      filtered = filtered.filter(recording => {
-        const recordingDate = dayjs(recording.date);
-        return recordingDate.isAfter(dateRange[0]) && recordingDate.isBefore(dateRange[1]);
+      Object.entries(patientBatches).forEach(([batchIdStr, batchRecordings]) => {
+        const batchId = parseInt(batchIdStr);
+        const batch = groupedData.batches[patientId]?.find(b => b.id === batchId);
+
+        if (!batch) return;
+
+        let batchFilteredRecordings = batchRecordings;
+
+        // Apply search filter
+        if (searchTerm) {
+          batchFilteredRecordings = batchFilteredRecordings.filter(recording =>
+            recording.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            recording.location.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        }
+
+        // Apply status filter
+        if (statusFilter !== "all") {
+          batchFilteredRecordings = batchFilteredRecordings.filter(recording =>
+            recording.status === statusFilter
+          );
+        }
+
+        // Apply heart area filter
+        if (heartAreaFilter !== "all") {
+          batchFilteredRecordings = batchFilteredRecordings.filter(recording =>
+            recording.location === heartAreaFilter
+          );
+        }
+
+        // Apply date range filter
+        if (dateRange) {
+          batchFilteredRecordings = batchFilteredRecordings.filter(recording => {
+            const recordingDate = dayjs(recording.date);
+            return recordingDate.isAfter(dateRange[0]) && recordingDate.isBefore(dateRange[1]);
+          });
+        }
+
+        // If this batch has matching recordings, include it
+        if (batchFilteredRecordings.length > 0) {
+          hasMatchingRecordings = true;
+          patientFilteredBatches.push(batch);
+          patientFilteredRecordings[batchId] = batchFilteredRecordings;
+        }
       });
-    }
 
-    setFilteredRecordings(filtered);
+      // If this patient has matching recordings, include them
+      if (hasMatchingRecordings) {
+        filteredPatients[patientId] = patient;
+        filteredBatches[patientId] = patientFilteredBatches;
+        filteredRecordingsData[patientId] = patientFilteredRecordings;
+      }
+    });
+
+    setFilteredData({
+      patients: filteredPatients,
+      batches: filteredBatches,
+      recordings: filteredRecordingsData
+    });
   };
 
   const getHeartAreaIcon = (area: string) => {
@@ -112,12 +206,77 @@ function RecordingsList(): JSX.Element {
     }
   };
 
+  const togglePatientExpansion = (patientId: number) => {
+    const newExpanded = new Set(expandedPatients);
+    if (newExpanded.has(patientId)) {
+      newExpanded.delete(patientId);
+      // Also collapse all batches for this patient
+      const patientBatches = filteredData.batches[patientId] || [];
+      const newExpandedBatches = new Set(expandedBatches);
+      patientBatches.forEach(batch => {
+        newExpandedBatches.delete(batch.id);
+      });
+      setExpandedBatches(newExpandedBatches);
+    } else {
+      newExpanded.add(patientId);
+    }
+    setExpandedPatients(newExpanded);
+  };
+
+  const toggleBatchExpansion = (batchId: number) => {
+    const newExpanded = new Set(expandedBatches);
+    if (newExpanded.has(batchId)) {
+      newExpanded.delete(batchId);
+    } else {
+      newExpanded.add(batchId);
+    }
+    setExpandedBatches(newExpanded);
+  };
+
+  const getBatchProgress = (batch: RecordingBatch): { completed: number; total: number; percentage: number } => {
+    const totalAreas = 4; // Aortic, Pulmonary, Tricuspid, Mitral
+    const completedAreas = batch.recordings ? batch.recordings.length : 0;
+    return {
+      completed: completedAreas,
+      total: totalAreas,
+      percentage: (completedAreas / totalAreas) * 100
+    };
+  };
+
+  const getBatchStatusColor = (batch: RecordingBatch) => {
+    if (batch.is_complete) return '#10b981'; // Green for complete
+    const progress = getBatchProgress(batch);
+    if (progress.completed === 0) return '#6b7280'; // Gray for not started
+    return '#f59e0b'; // Amber for in progress
+  };
+
   const handleDeleteRecording = async (id: number) => {
     try {
       await deleteRecording(id);
       await loadRecordings(); // Reload the list
     } catch (error) {
       console.error('Error deleting recording:', error);
+    }
+  };
+
+  const handleResumeBatch = (batch: RecordingBatch) => {
+    const patient = groupedData.patients[batch.patient.id];
+    if (patient) {
+      navigate('/quick-scan', {
+        state: {
+          patient: patient,
+          resumeBatch: batch
+        }
+      });
+    }
+  };
+
+  const handleDeleteBatch = async (batchId: number, patientId: number) => {
+    try {
+      await deleteRecordingBatch(batchId);
+      await loadRecordings(); // Reload the data
+    } catch (error) {
+      console.error('Error deleting recording batch:', error);
     }
   };
 
@@ -243,7 +402,11 @@ function RecordingsList(): JSX.Element {
 
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/20">
           <span className="text-white/60">
-            Showing {filteredRecordings.length} of {recordings.length} recordings
+            Showing {Object.keys(filteredData.patients).length} patients with {
+              Object.values(filteredData.recordings).reduce((total, patientBatches) =>
+                total + Object.values(patientBatches).reduce((batchTotal, batchRecordings) =>
+                  batchTotal + batchRecordings.length, 0), 0)
+            } recordings
           </span>
           <GlassButton
             variant="secondary"
@@ -261,18 +424,18 @@ function RecordingsList(): JSX.Element {
         </div>
       </GlassCard>
 
-      {/* Recordings Grid */}
-      <div className="grid grid-cols-1 gap-4 mb-16">
+      {/* Grouped Recordings Display */}
+      <div className="space-y-6 mb-16">
         {loading ? (
           <GlassCard padding="lg">
             <div className="text-center text-white/60 py-8">
               Loading recordings...
             </div>
           </GlassCard>
-        ) : filteredRecordings.length === 0 ? (
+        ) : Object.keys(filteredData.patients).length === 0 ? (
           <GlassCard padding="lg">
             <div className="text-center text-white/60 py-8">
-              {recordings.length === 0 ? (
+              {Object.keys(groupedData.patients).length === 0 ? (
                 <div>
                   <HeartOutlined style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }} />
                   <div className="text-lg mb-2">No recordings found</div>
@@ -287,106 +450,232 @@ function RecordingsList(): JSX.Element {
             </div>
           </GlassCard>
         ) : (
-          filteredRecordings.map((recording) => (
-            <GlassCard key={recording.id} padding="md">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  {/* Recording Info */}
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-white font-semibold text-lg flex-1">
-                        {formatHeartArea(recording.location)} Valve
-                      </h3>
-                      <div
-                        className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-3 flex items-center gap-1 justify-center"
-                        style={{
-                          backgroundColor: `${getStatusColor(recording.status)}20`,
-                          color: getStatusColor(recording.status),
-                          minWidth: '100px'
-                        }}
-                      >
-                        {recording.status === 'completed' ? (
-                          <CheckCircleOutlined />
-                        ) : recording.status === 'flagged' ? (
-                          <ExclamationCircleOutlined />
-                        ) : (
-                          <PlayCircleOutlined />
-                        )}
-                        <span>{recording.status.charAt(0).toUpperCase() + recording.status.slice(1)}</span>
+          // Patient Groups
+          Object.entries(filteredData.patients).map(([patientIdStr, patient]) => {
+            const patientId = parseInt(patientIdStr);
+            const isPatientExpanded = expandedPatients.has(patientId);
+            const patientBatches = filteredData.batches[patientId] || [];
+            const totalRecordings = Object.values(filteredData.recordings[patientId] || {})
+              .reduce((total, recordings) => total + recordings.length, 0);
+
+            return (
+              <div key={patientId} className="space-y-3">
+                {/* Patient Header */}
+                <GlassCard padding="md" className="cursor-pointer hover:scale-[1.01] transition-transform">
+                  <div className="flex items-center justify-between" onClick={() => togglePatientExpansion(patientId)}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {patient.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="text-white text-xl font-semibold">{patient.name}</h3>
+                        <div className="text-white/60 text-sm">
+                          {patientBatches.length} recording session{patientBatches.length !== 1 ? 's' : ''} • {totalRecordings} recording{totalRecordings !== 1 ? 's' : ''}
+                        </div>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <UserOutlined className="text-white/60 flex-shrink-0" />
-                        <span className="text-white truncate">{recording.patientName}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="text-white/60 text-sm">
+                        {isPatientExpanded ? 'Click to collapse' : 'Click to expand'}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <CalendarOutlined className="text-white/60 flex-shrink-0" />
-                        <span className="text-white/70 truncate">{recording.date} at {recording.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <HeartOutlined className="text-white/60 flex-shrink-0" />
-                        <span className="text-white/70">{recording.duration}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <HeartOutlined className="text-white/60 flex-shrink-0" />
-                        <span className="text-white/60 flex-shrink-0">Result:</span>
-                        <span
-                          className="font-medium truncate"
-                          style={{ color: getResultColor(recording.result) }}
-                        >
-                          {recording.result}
-                        </span>
+                      <div className={`transform transition-transform ${isPatientExpanded ? 'rotate-180' : ''}`}>
+                        ▼
                       </div>
                     </div>
+                  </div>
+                </GlassCard>
 
-                    {recording.notes && (
-                      <div className="mt-2 p-2 bg-white/10 rounded text-sm">
-                        <span className="text-white/60">Notes: </span>
-                        <span className="text-white">{recording.notes}</span>
-                      </div>
-                    )}
-                </div>
+                {/* Patient's Recording Batches */}
+                {isPatientExpanded && (
+                  <div className="ml-6 space-y-3">
+                    {patientBatches.map((batch) => {
+                      const isBatchExpanded = expandedBatches.has(batch.id);
+                      const batchRecordings = filteredData.recordings[patientId]?.[batch.id] || [];
+                      const progress = getBatchProgress(batch);
+                      const statusColor = getBatchStatusColor(batch);
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 ml-4">
-                  <Tooltip title="Play Recording">
-                    <GlassButton
-                      variant="secondary"
-                      size="sm"
-                      icon={<PlayCircleOutlined />}
-                      onClick={() => handlePlayRecording(recording)}
-                    />
-                  </Tooltip>
-                  <Tooltip title="Download">
-                    <GlassButton
-                      variant="secondary"
-                      size="sm"
-                      icon={<DownloadOutlined />}
-                      onClick={() => handleDownloadRecording(recording)}
-                    />
-                  </Tooltip>
-                  <Tooltip title="Delete Recording">
-                    <GlassButton
-                      variant="danger"
-                      size="sm"
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleDeleteRecording(recording.id)}
-                    />
-                  </Tooltip>
-                  {recording.status === "flagged" && (
-                    <Tooltip title="Needs Attention">
-                      <GlassButton
-                        variant="danger"
-                        size="sm"
-                        icon={<ExclamationCircleOutlined />}
-                      />
-                    </Tooltip>
-                  )}
-                </div>
+                      return (
+                        <div key={batch.id} className="space-y-2">
+                          {/* Batch Header */}
+                          <GlassCard padding="md" className="cursor-pointer hover:scale-[1.005] transition-transform">
+                            <div className="flex items-center justify-between" onClick={() => toggleBatchExpansion(batch.id)}>
+                              <div className="flex items-center gap-4 flex-1">
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                                  style={{ backgroundColor: statusColor }}
+                                >
+                                  {batch.is_complete ? '✓' : progress.completed}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h4 className="text-white font-medium">
+                                      Recording Session #{batch.id}
+                                    </h4>
+                                    <div
+                                      className="px-2 py-1 rounded-full text-xs font-medium"
+                                      style={{
+                                        backgroundColor: `${statusColor}20`,
+                                        color: statusColor
+                                      }}
+                                    >
+                                      {batch.is_complete ? 'Complete' : 'In Progress'}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-6 text-sm text-white/70">
+                                    <div className="flex items-center gap-2">
+                                      <CalendarOutlined className="text-white/60" />
+                                      <span>{new Date(batch.start_time).toLocaleDateString()} at {new Date(batch.start_time).toLocaleTimeString()}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <HeartOutlined className="text-white/60" />
+                                      <span>{progress.completed}/{progress.total} areas</span>
+                                    </div>
+                                  </div>
+                                  {progress.percentage > 0 && progress.percentage < 100 && (
+                                    <div className="mt-2 w-full max-w-xs">
+                                      <div className="w-full bg-white/20 rounded-full h-1.5">
+                                        <div
+                                          className="h-1.5 rounded-full transition-all duration-300"
+                                          style={{
+                                            width: `${progress.percentage}%`,
+                                            backgroundColor: statusColor
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {!batch.is_complete && progress.completed > 0 && (
+                                  <Tooltip title="Resume Recording Session">
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <GlassButton
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={() => handleResumeBatch(batch)}
+                                      >
+                                        Resume
+                                      </GlassButton>
+                                    </div>
+                                  </Tooltip>
+                                )}
+                                <Tooltip title="Delete Recording Session">
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <GlassButton
+                                      variant="danger"
+                                      size="sm"
+                                      icon={<DeleteOutlined />}
+                                      onClick={() => handleDeleteBatch(batch.id, patientId)}
+                                    />
+                                  </div>
+                                </Tooltip>
+                                <div className="text-white/60 text-sm mr-2">
+                                  {batchRecordings.length} recording{batchRecordings.length !== 1 ? 's' : ''}
+                                </div>
+                                <div className={`transform transition-transform ${isBatchExpanded ? 'rotate-180' : ''}`}>
+                                  ▼
+                                </div>
+                              </div>
+                            </div>
+                          </GlassCard>
+
+                          {/* Batch Recordings */}
+                          {isBatchExpanded && (
+                            <div className="ml-6 space-y-2">
+                              {batchRecordings.map((recording) => (
+                                <GlassCard key={recording.id} padding="sm">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className="text-white font-medium">
+                                          {formatHeartArea(recording.location)} Valve
+                                        </h5>
+                                        <div
+                                          className="px-2 py-1 rounded-full text-xs font-medium"
+                                          style={{
+                                            backgroundColor: `${getStatusColor(recording.status)}20`,
+                                            color: getStatusColor(recording.status)
+                                          }}
+                                        >
+                                          {recording.status === 'completed' ? (
+                                            <><CheckCircleOutlined className="mr-1" /> Completed</>
+                                          ) : recording.status === 'flagged' ? (
+                                            <><ExclamationCircleOutlined className="mr-1" /> Flagged</>
+                                          ) : (
+                                            <><PlayCircleOutlined className="mr-1" /> Processing</>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                                        <div className="flex items-center gap-2">
+                                          <CalendarOutlined className="text-white/60" />
+                                          <span className="text-white/70">{recording.time}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <HeartOutlined className="text-white/60" />
+                                          <span className="text-white/70">{recording.duration}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-white/60">Result:</span>
+                                          <span
+                                            className="font-medium"
+                                            style={{ color: getResultColor(recording.result) }}
+                                          >
+                                            {recording.result}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {recording.notes && (
+                                        <div className="mt-2 p-2 bg-white/10 rounded text-sm">
+                                          <span className="text-white/60">Notes: </span>
+                                          <span className="text-white">{recording.notes}</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Recording Actions */}
+                                    <div className="flex items-center gap-2 ml-4">
+                                      <Tooltip title="Play Recording">
+                                        <GlassButton
+                                          variant="secondary"
+                                          size="sm"
+                                          icon={<PlayCircleOutlined />}
+                                          onClick={() => handlePlayRecording(recording)}
+                                        />
+                                      </Tooltip>
+                                      <Tooltip title="Download">
+                                        <GlassButton
+                                          variant="secondary"
+                                          size="sm"
+                                          icon={<DownloadOutlined />}
+                                          onClick={() => handleDownloadRecording(recording)}
+                                        />
+                                      </Tooltip>
+                                      <Tooltip title="Delete Recording">
+                                        <GlassButton
+                                          variant="danger"
+                                          size="sm"
+                                          icon={<DeleteOutlined />}
+                                          onClick={() => handleDeleteRecording(recording.id)}
+                                        />
+                                      </Tooltip>
+                                    </div>
+                                  </div>
+                                </GlassCard>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </GlassCard>
-          ))
+            );
+          })
         )}
       </div>
     </div>

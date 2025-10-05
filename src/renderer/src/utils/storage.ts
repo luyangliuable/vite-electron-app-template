@@ -226,6 +226,21 @@ export const updateRecordingBatch = async (batch: RecordingBatch): Promise<Recor
   return db.update(STORES.RECORDING_BATCHES, batch);
 };
 
+export const deleteRecordingBatch = async (batchId: number): Promise<void> => {
+  await initDB();
+
+  // First delete all recordings associated with this batch
+  const recordings = await getRecordings();
+  const batchRecordings = recordings.filter(recording => recording.recording_batch_id === batchId);
+
+  for (const recording of batchRecordings) {
+    await deleteRecording(recording.id);
+  }
+
+  // Then delete the batch itself
+  return db.delete(STORES.RECORDING_BATCHES, batchId);
+};
+
 // Recording management
 export const saveRecording = async (recording: Omit<Recording, 'id'>): Promise<Recording> => {
   await initDB();
@@ -284,7 +299,87 @@ export const deleteRecording = async (id: number): Promise<void> => {
   return db.delete(STORES.RECORDINGS, id);
 };
 
-// Utility functions for filtering and searching
+// Utility functions for grouping and filtering
+
+// Group recording batches by patient
+export const getGroupedRecordingBatches = async (): Promise<Record<number, RecordingBatch[]>> => {
+  const batches = await getRecordingBatches();
+  const groupedBatches: Record<number, RecordingBatch[]> = {};
+
+  batches.forEach(batch => {
+    const patientId = batch.patient.id;
+    if (!groupedBatches[patientId]) {
+      groupedBatches[patientId] = [];
+    }
+    groupedBatches[patientId].push(batch);
+  });
+
+  // Sort batches by start_time (newest first) within each patient group
+  Object.keys(groupedBatches).forEach(patientId => {
+    groupedBatches[parseInt(patientId)].sort((a, b) =>
+      new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+    );
+  });
+
+  return groupedBatches;
+};
+
+// Get recording batches for a specific patient
+export const getRecordingBatchesByPatient = async (patientId: number): Promise<RecordingBatch[]> => {
+  const batches = await getRecordingBatches();
+  return batches
+    .filter(batch => batch.patient.id === patientId)
+    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+};
+
+// Get extended recordings grouped by patient and batch
+export const getGroupedExtendedRecordings = async (): Promise<Record<number, Record<number, ExtendedRecording[]>>> => {
+  const [recordings, patients, batches] = await Promise.all([
+    getRecordings(),
+    getPatients(),
+    getRecordingBatches()
+  ]);
+
+  const groupedRecordings: Record<number, Record<number, ExtendedRecording[]>> = {};
+
+  recordings.forEach(recording => {
+    const batch = batches.find(b => b.id === recording.recording_batch_id);
+    const patient = batch?.patient || { id: 0, name: 'Unknown Patient' };
+    const date = new Date(recording.start_time);
+
+    // Calculate duration from audio blob if possible
+    let duration = '30s'; // Default
+    if (recording.audio && recording.audio instanceof Blob) {
+      duration = '30s';
+    }
+
+    const extendedRecording: ExtendedRecording = {
+      ...recording,
+      patientName: patient.name,
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString(),
+      duration,
+      result: 'Normal' as Label,
+      status: 'completed' as const,
+      notes: ''
+    };
+
+    const patientId = patient.id;
+    const batchId = batch?.id || 0;
+
+    if (!groupedRecordings[patientId]) {
+      groupedRecordings[patientId] = {};
+    }
+    if (!groupedRecordings[patientId][batchId]) {
+      groupedRecordings[patientId][batchId] = [];
+    }
+
+    groupedRecordings[patientId][batchId].push(extendedRecording);
+  });
+
+  return groupedRecordings;
+};
+
 export const getRecordingsByPatient = async (patientId: number): Promise<Recording[]> => {
   const [recordings, batches] = await Promise.all([
     getRecordings(),
@@ -313,7 +408,7 @@ export const getRecordingsByDateRange = async (startDate: Date, endDate: Date): 
 // Storage cleanup and maintenance
 export const clearAllData = async (): Promise<void> => {
   await initDB();
-  
+
   const stores = Object.values(STORES);
   for (const storeName of stores) {
     const store = db['getStore'](storeName, 'readwrite');
@@ -344,25 +439,25 @@ export const exportData = async (): Promise<string> => {
 
 export const importData = async (jsonData: string): Promise<void> => {
   await initDB();
-  
+
   const data = JSON.parse(jsonData);
-  
+
   // Clear existing data
   await clearAllData();
-  
+
   // Import new data
   if (data.patients) {
     for (const patient of data.patients) {
       await db.add(STORES.PATIENTS, patient);
     }
   }
-  
+
   if (data.recordingBatches) {
     for (const batch of data.recordingBatches) {
       await db.add(STORES.RECORDING_BATCHES, batch);
     }
   }
-  
+
   if (data.recordings) {
     for (const recording of data.recordings) {
       // Create empty blob for imported recordings without audio

@@ -8,6 +8,7 @@ import {
   CheckCircleOutlined,
   PlusOutlined,
   DeleteOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { useLocation } from "react-router-dom";
 import GlassCard from "../components/GlassCard";
@@ -104,14 +105,22 @@ function QuickScanPage(): JSX.Element {
     clearError,
   } = useAudioRecording(30000); // 30 second max
 
-  // Create recording batch on component mount - check for patient data first
+  // Create or resume recording batch on component mount
   useEffect(() => {
     if (!currentRecordingBatch) {
       const patientFromNav = location.state?.patient as Patient | undefined;
-      if (patientFromNav) {
+      const resumeBatch = location.state?.resumeBatch as RecordingBatch | undefined;
+
+      if (resumeBatch && patientFromNav) {
+        // Resume existing batch
+        setSelectedPatient(patientFromNav);
+        resumeExistingBatch(resumeBatch);
+      } else if (patientFromNav) {
+        // Create new batch for patient
         setSelectedPatient(patientFromNav);
         createPatientRecordingBatch(patientFromNav);
       } else {
+        // Create anonymous batch
         createAnonymousRecordingBatch();
       }
     }
@@ -131,6 +140,55 @@ function QuickScanPage(): JSX.Element {
       setCurrentRecordingBatch(batch);
     } catch (error) {
       console.error('Failed to create patient recording batch:', error);
+    }
+  };
+
+  const resumeExistingBatch = async (batch: RecordingBatch) => {
+    try {
+      // Set the current batch
+      setCurrentRecordingBatch(batch);
+
+      // Restore completion status based on existing recordings
+      const newCompletedRecordings = {
+        [HeartLocationEnum.Aortic]: false,
+        [HeartLocationEnum.Pulmonary]: false,
+        [HeartLocationEnum.Tricuspid]: false,
+        [HeartLocationEnum.Mitral]: false
+      };
+
+      const recordingResults: Partial<Record<HeartLocation, Recording>> = {};
+
+      // Mark areas as completed based on existing recordings
+      if (batch.recordings) {
+        batch.recordings.forEach(recording => {
+          newCompletedRecordings[recording.location] = true;
+          recordingResults[recording.location] = recording;
+        });
+      }
+
+      setCompletedRecordings(newCompletedRecordings);
+      setRecordingResults(recordingResults);
+
+      // Restore skin barriers if any
+      if (batch.skin_barriers) {
+        const localBarriers: LocalSkinBarrier[] = batch.skin_barriers.map((barrier, index) => ({
+          id: `barrier-${index}`,
+          ...barrier
+        }));
+        setSkinBarriers(localBarriers);
+      }
+
+      // Set current step based on progress
+      if (batch.is_complete) {
+        setCurrentStep(WorkflowSteps.Complete);
+        setAnalysisComplete(true);
+      } else {
+        setCurrentStep(WorkflowSteps.SelectLocation);
+      }
+
+      console.log(`Resumed batch ${batch.id} with ${batch.recordings?.length || 0} existing recordings`);
+    } catch (error) {
+      console.error('Failed to resume existing batch:', error);
     }
   };
 
@@ -243,11 +301,15 @@ function QuickScanPage(): JSX.Element {
           [currentArea]: recording,
         }));
 
-        // Update recording batch with new recording
+        // Update recording batch with new recording and current skin barriers
         const updatedBatch = {
           ...currentRecordingBatch,
           recordings: [...currentRecordingBatch.recordings, recording],
-          selected_recordings: [...currentRecordingBatch.selected_recordings, recording.id]
+          selected_recordings: [...currentRecordingBatch.selected_recordings, recording.id],
+          skin_barriers: skinBarriers.map(barrier => ({
+            level: barrier.level,
+            option: barrier.option
+          }))
         };
 
         await updateRecordingBatch(updatedBatch);
@@ -469,6 +531,8 @@ function QuickScanPage(): JSX.Element {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const isResumedSession = location.state?.resumeBatch ? true : false;
 
   return (
     <div className="quick-scan-container">

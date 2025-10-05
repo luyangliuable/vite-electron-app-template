@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Modal, Form, DatePicker, message, Tooltip } from "antd";
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, HeartOutlined } from "@ant-design/icons";
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, HeartOutlined, PlayCircleOutlined, DownloadOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import GlassCard from "../components/GlassCard";
@@ -8,7 +8,8 @@ import GlassButton from "../components/GlassButton";
 import Title from "antd/es/typography/Title";
 import type Patient from "../types/Patient";
 import type PatientDetails from "../types/PatientDetails";
-import { getPatients, savePatient, deletePatient, getRecordingsByPatient } from "../utils/storage";
+import type RecordingBatch from "../types/RecordingBatch";
+import { getPatients, savePatient, deletePatient, getRecordingsByPatient, getRecordingBatchesByPatient, deleteRecordingBatch } from "../utils/storage";
 import "./PatientSelect.css";
 
 interface NewPatientFormData {
@@ -31,7 +32,8 @@ function PatientList(): JSX.Element {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [patientRecordings, setPatientRecordings] = useState<any[]>([]);
+  const [patientBatches, setPatientBatches] = useState<RecordingBatch[]>([]);
+  const [expandedBatches, setExpandedBatches] = useState<Set<number>>(new Set());
   const [showNewPatientModal, setShowNewPatientModal] = useState(false);
   const [form] = Form.useForm<NewPatientFormData>();
 
@@ -57,12 +59,18 @@ function PatientList(): JSX.Element {
 
   const handlePatientSelect = async (patient: Patient) => {
     setSelectedPatient(patient);
-    // Load patient's recordings
+    // Load patient's recording batches
     try {
-      const recordings = await getRecordingsByPatient(patient.id);
-      setPatientRecordings(recordings);
+      const batches = await getRecordingBatchesByPatient(patient.id);
+      setPatientBatches(batches);
+      // Auto-expand first batch if it exists
+      if (batches.length > 0) {
+        setExpandedBatches(new Set([batches[0].id]));
+      } else {
+        setExpandedBatches(new Set());
+      }
     } catch (error) {
-      console.error('Error loading patient recordings:', error);
+      console.error('Error loading patient batches:', error);
     }
   };
 
@@ -144,6 +152,52 @@ function PatientList(): JSX.Element {
     form.resetFields();
   };
 
+  const toggleBatchExpansion = (batchId: number) => {
+    const newExpanded = new Set(expandedBatches);
+    if (newExpanded.has(batchId)) {
+      newExpanded.delete(batchId);
+    } else {
+      newExpanded.add(batchId);
+    }
+    setExpandedBatches(newExpanded);
+  };
+
+  const getBatchProgress = (batch: RecordingBatch): { completed: number; total: number; percentage: number } => {
+    const totalAreas = 4; // Aortic, Pulmonary, Tricuspid, Mitral
+    const completedAreas = batch.recordings ? batch.recordings.length : 0;
+    return {
+      completed: completedAreas,
+      total: totalAreas,
+      percentage: (completedAreas / totalAreas) * 100
+    };
+  };
+
+  const getBatchStatusColor = (batch: RecordingBatch) => {
+    if (batch.is_complete) return '#10b981'; // Green for complete
+    const progress = getBatchProgress(batch);
+    if (progress.completed === 0) return '#6b7280'; // Gray for not started
+    return '#f59e0b'; // Amber for in progress
+  };
+
+  const handleResumeBatch = (batch: RecordingBatch) => {
+    // Navigate to QuickScanPage with batch data for resume
+    navigate('/quick-scan', { state: { patient: selectedPatient, resumeBatch: batch } });
+  };
+
+  const handleDeleteBatch = async (batchId: number) => {
+    try {
+      await deleteRecordingBatch(batchId);
+      // Reload patient batches
+      if (selectedPatient) {
+        await handlePatientSelect(selectedPatient);
+      }
+      message.success('Recording session deleted successfully');
+    } catch (error) {
+      console.error('Error deleting recording batch:', error);
+      message.error('Failed to delete recording session');
+    }
+  };
+
   const handleDeletePatient = async (patientId: number) => {
     try {
       await deletePatient(patientId);
@@ -151,7 +205,8 @@ function PatientList(): JSX.Element {
       message.success('Patient deleted successfully');
       if (selectedPatient?.id === patientId) {
         setSelectedPatient(null);
-        setPatientRecordings([]);
+        setPatientBatches([]);
+        setExpandedBatches(new Set());
       }
     } catch (error) {
       console.error('Error deleting patient:', error);
@@ -312,50 +367,154 @@ function PatientList(): JSX.Element {
             </div>
           )}
 
-          {/* Recordings Section */}
+          {/* Recording Sessions Section */}
           {selectedPatient && (
             <div>
               <div className="section-header">
                 <div className="section-dot"></div>
-                <h2 className="section-title">Heart Sound Recordings</h2>
+                <h2 className="section-title">Recording Sessions</h2>
                 <div className="ml-auto">
                   <GlassButton size="sm" variant="primary" onClick={handleAddRecording}>
-                    Add Recording
+                    New Recording Session
                   </GlassButton>
                 </div>
               </div>
 
               <div className="recordings-list">
-                {patientRecordings.length === 0 ? (
+                {patientBatches.length === 0 ? (
                   <div className="text-center text-white/60 py-8">
                     <HeartOutlined style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }} />
-                    <div>No recordings found.</div>
-                    <div className="text-sm mt-2">Click "Add Recording" to create the first recording.</div>
+                    <div>No recording sessions found.</div>
+                    <div className="text-sm mt-2">Click "New Recording Session" to start recording heart sounds.</div>
                   </div>
                 ) : (
-                  patientRecordings.map((recording) => (
-                    <div key={recording.id} className="recording-card">
-                      <div className="recording-info">
-                        <div className="recording-header">
-                          <div className="recording-type">{recording.location} Valve</div>
-                          <div className={`recording-status status-completed`}>
-                            ✓
+                  <div className="space-y-3">
+                    {patientBatches.map((batch) => {
+                      const isBatchExpanded = expandedBatches.has(batch.id);
+                      const progress = getBatchProgress(batch);
+                      const statusColor = getBatchStatusColor(batch);
+
+                      return (
+                        <div key={batch.id} className="space-y-2">
+                          {/* Batch Header */}
+                          <div
+                            className="recording-card cursor-pointer hover:bg-white/5 transition-colors"
+                            onClick={() => toggleBatchExpansion(batch.id)}
+                          >
+                            <div className="recording-info flex-1">
+                              <div className="recording-header">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                                    style={{ backgroundColor: statusColor }}
+                                  >
+                                    {batch.is_complete ? '✓' : progress.completed}
+                                  </div>
+                                  <div className="recording-type">Session #{batch.id}</div>
+                                  <div
+                                    className="px-2 py-1 rounded-full text-xs font-medium"
+                                    style={{
+                                      backgroundColor: `${statusColor}20`,
+                                      color: statusColor
+                                    }}
+                                  >
+                                    {batch.is_complete ? 'Complete' : 'In Progress'}
+                                  </div>
+                                </div>
+                                <div className={`transform transition-transform ${isBatchExpanded ? 'rotate-180' : ''}`}>
+                                  ▼
+                                </div>
+                              </div>
+                              <div className="recording-details">
+                                <span className="recording-date">
+                                  {new Date(batch.start_time).toLocaleDateString()} at {new Date(batch.start_time).toLocaleTimeString()}
+                                </span>
+                                <span className="mx-2">•</span>
+                                <span className="text-white/70">{progress.completed}/{progress.total} heart areas</span>
+                              </div>
+                              {progress.percentage > 0 && progress.percentage < 100 && (
+                                <div className="mt-2 w-full max-w-xs">
+                                  <div className="w-full bg-white/20 rounded-full h-1">
+                                    <div
+                                      className="h-1 rounded-full transition-all duration-300"
+                                      style={{
+                                        width: `${progress.percentage}%`,
+                                        backgroundColor: statusColor
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="recording-actions">
+                              {!batch.is_complete && progress.completed > 0 && (
+                                <Tooltip title="Resume Recording Session">
+                                  <GlassButton
+                                    size="sm"
+                                    variant="primary"
+                                    onClick={() => handleResumeBatch(batch)}
+                                  >
+                                    Resume
+                                  </GlassButton>
+                                </Tooltip>
+                              )}
+                              <Tooltip title="Delete Recording Session">
+                                <GlassButton
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteBatch(batch.id)}
+                                />
+                              </Tooltip>
+                              <GlassButton size="sm" variant="secondary">
+                                View
+                              </GlassButton>
+                            </div>
                           </div>
+
+                          {/* Individual Recordings */}
+                          {isBatchExpanded && (
+                            <div className="ml-8 space-y-2">
+                              {batch.recordings && batch.recordings.length > 0 ? (
+                                batch.recordings.map((recording) => (
+                                  <div key={recording.id} className="recording-card bg-white/5">
+                                    <div className="recording-info">
+                                      <div className="recording-header">
+                                        <div className="recording-type">{recording.location} Valve</div>
+                                        <div className="recording-status status-completed">
+                                          ✓
+                                        </div>
+                                      </div>
+                                      <div className="recording-details">
+                                        <span className="recording-date">
+                                          {new Date(recording.start_time).toLocaleDateString()} at {new Date(recording.start_time).toLocaleTimeString()}
+                                        </span>
+                                      </div>
+                                      <div className="recording-result">
+                                        30s heart sound recording
+                                      </div>
+                                    </div>
+                                    <div className="recording-actions">
+                                      <Tooltip title="Play Recording">
+                                        <GlassButton size="sm" variant="secondary" icon={<PlayCircleOutlined />} />
+                                      </Tooltip>
+                                      <Tooltip title="Download">
+                                        <GlassButton size="sm" variant="secondary" icon={<DownloadOutlined />} />
+                                      </Tooltip>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-center text-white/50 py-4 text-sm">
+                                  No individual recordings in this session yet
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <div className="recording-details">
-                          <span className="recording-date">{new Date(recording.start_time).toLocaleDateString()} at {new Date(recording.start_time).toLocaleTimeString()}</span>
-                        </div>
-                        <div className="recording-result">
-                          Recorded via Quick Scan
-                        </div>
-                      </div>
-                      <div className="recording-actions">
-                        <GlassButton size="sm" variant="secondary">
-                          View
-                        </GlassButton>
-                      </div>
-                    </div>
-                  ))
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
