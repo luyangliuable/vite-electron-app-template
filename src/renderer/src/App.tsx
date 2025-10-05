@@ -1,6 +1,6 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import AddFiles from "./pages/AddFiles";
+import PatientList from "./pages/PatientList";
 import QuickScanPage from "./pages/QuickScanPage";
 import PairDevice from "./pages/PairDevice";
 import RecordingsList from "./pages/RecordingsList";
@@ -29,8 +29,8 @@ function App(): JSX.Element {
             <Routes>
               <Route index element={<HomePage />} />
               <Route element={<FeaturePageLayout />}>
-                <Route path="/patients" element={<AddFiles />} />
-                <Route path="/add-files" element={<AddFiles />} />
+                <Route path="/patients" element={<PatientList />} />
+                <Route path="/add-files" element={<PatientList />} />
                 <Route path="/list-team-repos" element={<QuickScanPage />} />
                 <Route path="/quick-scan" element={<QuickScanPage />} />
                 <Route path="/pair-device" element={<PairDevice />} />

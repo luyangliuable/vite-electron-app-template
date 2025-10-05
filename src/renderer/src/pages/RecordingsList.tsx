@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Select, DatePicker, Space, Tooltip } from "antd";
-import { 
-  SearchOutlined, 
+import {
+  SearchOutlined,
   FilterOutlined,
   HeartOutlined,
   CalendarOutlined,
@@ -9,7 +9,9 @@ import {
   PlayCircleOutlined,
   DownloadOutlined,
   ExclamationCircleOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  ReloadOutlined,
+  DeleteOutlined
 } from "@ant-design/icons";
 import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
@@ -20,94 +22,14 @@ import type HeartLocation from "../types/HeartLocation";
 import HeartLocationEnum from "../types/HeartLocation";
 import type Label from "../types/Label";
 import LabelEnum from "../types/Label";
+import { getExtendedRecordings, deleteRecording, type ExtendedRecording } from "../utils/storage";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-interface ExtendedRecording extends Recording {
-  patientName: string;
-  date: string;
-  time: string;
-  duration: string;
-  result: Label;
-  status: "completed" | "flagged" | "processing";
-  notes?: string;
-}
+// ExtendedRecording is now imported from storage utils
 
-const mockRecordings: ExtendedRecording[] = [
-  {
-    id: 1,
-    recording_batch_id: 1,
-    device_id: 1,
-    location: HeartLocationEnum.Mitral,
-    audio: new Blob(),
-    start_time: "2024-01-15T10:30:00Z",
-    patientName: "Liam Carter",
-    date: "2024-01-15",
-    time: "10:30 AM",
-    duration: "45s",
-    result: LabelEnum.Normal,
-    status: "completed",
-    notes: "Clear heart sounds, no murmurs detected"
-  },
-  {
-    id: 2,
-    recording_batch_id: 1,
-    device_id: 1,
-    location: HeartLocationEnum.Aortic,
-    audio: new Blob(),
-    start_time: "2024-01-10T14:15:00Z",
-    patientName: "Liam Carter", 
-    date: "2024-01-10",
-    time: "2:15 PM",
-    duration: "38s",
-    result: LabelEnum.Normal,
-    status: "completed"
-  },
-  {
-    id: 3,
-    recording_batch_id: 2,
-    device_id: 2,
-    location: HeartLocationEnum.Tricuspid,
-    audio: new Blob(),
-    start_time: "2024-01-05T09:45:00Z",
-    patientName: "Sarah Johnson",
-    date: "2024-01-05", 
-    time: "9:45 AM",
-    duration: "52s",
-    result: LabelEnum.Abnormal,
-    status: "flagged",
-    notes: "Irregular heart rhythm detected, recommend further evaluation"
-  },
-  {
-    id: 4,
-    recording_batch_id: 3,
-    device_id: 1,
-    location: HeartLocationEnum.Pulmonary,
-    audio: new Blob(),
-    start_time: "2024-01-20T11:00:00Z",
-    patientName: "Michael Brown",
-    date: "2024-01-20",
-    time: "11:00 AM", 
-    duration: "41s",
-    result: LabelEnum.Normal,
-    status: "completed"
-  },
-  {
-    id: 5,
-    recording_batch_id: 2,
-    device_id: 1,
-    location: HeartLocationEnum.Aortic,
-    audio: new Blob(),
-    start_time: "2024-01-22T15:30:00Z",
-    patientName: "Sarah Johnson",
-    date: "2024-01-22",
-    time: "3:30 PM",
-    duration: "35s", 
-    result: LabelEnum.Unknown,
-    status: "processing"
-  }
-];
+// Mock recordings removed - now using IndexedDB storage
 
 function RecordingsList(): JSX.Element {
   const [recordings, setRecordings] = useState<ExtendedRecording[]>([]);
@@ -129,12 +51,11 @@ function RecordingsList(): JSX.Element {
   const loadRecordings = async () => {
     try {
       setLoading(true);
-      setTimeout(() => {
-        setRecordings(mockRecordings);
-        setLoading(false);
-      }, 500);
+      const allRecordings = await getExtendedRecordings();
+      setRecordings(allRecordings);
     } catch (error) {
       console.error('Error loading recordings:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -175,7 +96,7 @@ function RecordingsList(): JSX.Element {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed": return "#10b981";
-      case "flagged": return "#f59e0b";  
+      case "flagged": return "#f59e0b";
       case "processing": return "#3b82f6";
       default: return "#6b7280";
     }
@@ -188,6 +109,41 @@ function RecordingsList(): JSX.Element {
       case LabelEnum.Unknown: return "#f59e0b";
       case LabelEnum.Unlabelled: return "#6b7280";
       default: return "#6b7280";
+    }
+  };
+
+  const handleDeleteRecording = async (id: number) => {
+    try {
+      await deleteRecording(id);
+      await loadRecordings(); // Reload the list
+    } catch (error) {
+      console.error('Error deleting recording:', error);
+    }
+  };
+
+  const handlePlayRecording = (recording: ExtendedRecording) => {
+    if (recording.audio && recording.audio instanceof Blob) {
+      const url = URL.createObjectURL(recording.audio);
+      const audio = new Audio(url);
+      audio.play().catch(console.error);
+
+      // Clean up URL after playing
+      audio.addEventListener('ended', () => {
+        URL.revokeObjectURL(url);
+      });
+    }
+  };
+
+  const handleDownloadRecording = (recording: ExtendedRecording) => {
+    if (recording.audio && recording.audio instanceof Blob) {
+      const url = URL.createObjectURL(recording.audio);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `recording-${recording.patientName}-${recording.location}-${recording.date}.wav`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -204,6 +160,16 @@ function RecordingsList(): JSX.Element {
         <p className="text-white/70 text-lg mt-2">
           View and manage all heart sound recordings across all patients
         </p>
+        <div className="mt-4">
+          <GlassButton
+            variant="secondary"
+            size="sm"
+            icon={<ReloadOutlined />}
+            onClick={loadRecordings}
+          >
+            Refresh
+          </GlassButton>
+        </div>
       </div>
 
       {/* Filters */}
@@ -220,7 +186,7 @@ function RecordingsList(): JSX.Element {
               size="large"
             />
           </div>
-          
+
           <div>
             <label className="text-white/70 text-sm block mb-2">Status</label>
             <Select
@@ -228,7 +194,7 @@ function RecordingsList(): JSX.Element {
               onChange={setStatusFilter}
               className="w-full"
               size="large"
-              style={{ 
+              style={{
                 background: "rgba(255, 255, 255, 0.1)",
                 border: "none"
               }}
@@ -247,7 +213,7 @@ function RecordingsList(): JSX.Element {
               onChange={setHeartAreaFilter}
               className="w-full"
               size="large"
-              style={{ 
+              style={{
                 background: "rgba(255, 255, 255, 0.1)",
                 border: "none"
               }}
@@ -267,7 +233,7 @@ function RecordingsList(): JSX.Element {
               onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
               className="w-full"
               size="large"
-              style={{ 
+              style={{
                 background: "rgba(255, 255, 255, 0.1)",
                 border: "none"
               }}
@@ -306,7 +272,18 @@ function RecordingsList(): JSX.Element {
         ) : filteredRecordings.length === 0 ? (
           <GlassCard padding="lg">
             <div className="text-center text-white/60 py-8">
-              No recordings found matching your criteria.
+              {recordings.length === 0 ? (
+                <div>
+                  <HeartOutlined style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }} />
+                  <div className="text-lg mb-2">No recordings found</div>
+                  <div className="text-sm">Start a recording session to see recordings here</div>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-lg mb-2">No recordings match your criteria</div>
+                  <div className="text-sm">Try adjusting your filters or search terms</div>
+                </div>
+              )}
             </div>
           </GlassCard>
         ) : (
@@ -319,9 +296,9 @@ function RecordingsList(): JSX.Element {
                       <h3 className="text-white font-semibold text-lg flex-1">
                         {formatHeartArea(recording.location)} Valve
                       </h3>
-                      <div 
+                      <div
                         className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-3 flex items-center gap-1 justify-center"
-                        style={{ 
+                        style={{
                           backgroundColor: `${getStatusColor(recording.status)}20`,
                           color: getStatusColor(recording.status),
                           minWidth: '100px'
@@ -354,7 +331,7 @@ function RecordingsList(): JSX.Element {
                       <div className="flex items-center gap-2">
                         <HeartOutlined className="text-white/60 flex-shrink-0" />
                         <span className="text-white/60 flex-shrink-0">Result:</span>
-                        <span 
+                        <span
                           className="font-medium truncate"
                           style={{ color: getResultColor(recording.result) }}
                         >
@@ -378,6 +355,7 @@ function RecordingsList(): JSX.Element {
                       variant="secondary"
                       size="sm"
                       icon={<PlayCircleOutlined />}
+                      onClick={() => handlePlayRecording(recording)}
                     />
                   </Tooltip>
                   <Tooltip title="Download">
@@ -385,6 +363,15 @@ function RecordingsList(): JSX.Element {
                       variant="secondary"
                       size="sm"
                       icon={<DownloadOutlined />}
+                      onClick={() => handleDownloadRecording(recording)}
+                    />
+                  </Tooltip>
+                  <Tooltip title="Delete Recording">
+                    <GlassButton
+                      variant="danger"
+                      size="sm"
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteRecording(recording.id)}
                     />
                   </Tooltip>
                   {recording.status === "flagged" && (

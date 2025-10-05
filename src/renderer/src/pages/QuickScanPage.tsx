@@ -13,7 +13,7 @@ import { useLocation } from "react-router-dom";
 import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
 import AudioWaveform from "../components/AudioWaveform";
-import useMicrophoneAnalyser from "../hooks/useMicrophoneAnalyser";
+import useAudioRecording from "../hooks/useAudioRecording";
 import Title from "antd/es/typography/Title";
 import "./QuickScan.css";
 import "../styles/theme.css";
@@ -29,6 +29,7 @@ import SkinBarrierOptionsEnum from "../enums/SkinBarrierOptions";
 import type Recording from "../types/Recording";
 import type RecordingBatch from "../types/RecordingBatch";
 import type Patient from "../types/Patient";
+import { saveRecording, saveRecordingBatch, updateRecordingBatch } from "../utils/storage";
 
 const { Step } = Steps;
 const { Option } = Select;
@@ -73,12 +74,11 @@ const heartAreas: HeartAreaInfo[] = [
 
 function QuickScanPage(): JSX.Element {
   const location = useLocation();
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
+  // Recording state is now managed by useAudioRecording hook
   const [currentStep, setCurrentStep] = useState<number>(WorkflowSteps.SelectPatient);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [selectedHeartArea, setSelectedHeartArea] = useState<HeartLocation | "">("");
-  const [patientId, setPatientId] = useState<number | null>(null);
+  const [currentRecordingBatch, setCurrentRecordingBatch] = useState<RecordingBatch | null>(null);
   const [completedRecordings, setCompletedRecordings] = useState<
     Record<HeartLocation, boolean>
   >({
@@ -87,25 +87,61 @@ function QuickScanPage(): JSX.Element {
     [HeartLocationEnum.Tricuspid]: false,
     [HeartLocationEnum.Mitral]: false
   });
-  const [recordingResults, setRecordingResults] = useState<Partial<Record<HeartLocation, any>>>(
+  const [recordingResults, setRecordingResults] = useState<Partial<Record<HeartLocation, Recording>>>(
     {},
   );
   const [skinBarriers, setSkinBarriers] = useState<LocalSkinBarrier[]>([]);
   const [currentSection, setCurrentSection] = useState(0);
   const {
+    isRecording,
+    recordingTime,
+    recordingData,
     analyser,
-    start: startMicrophone,
-    stop: stopMicrophone,
+    startRecording: startAudioRecording,
+    stopRecording: stopAudioRecording,
     error: audioError,
     clearError,
-  } = useMicrophoneAnalyser();
+  } = useAudioRecording(30000); // 30 second max
 
-  // Get patient ID from navigation state if coming from patient select
+  // Create recording batch on component mount for anonymous recording
   useEffect(() => {
-    if (location.state?.patientId) {
-      setPatientId(location.state.patientId);
+    if (!currentRecordingBatch) {
+      createAnonymousRecordingBatch();
     }
-  }, [location.state]);
+  }, []);
+
+  const createAnonymousRecordingBatch = async () => {
+    try {
+      // Create anonymous patient for Quick Scan recordings
+      const anonymousPatient: Patient = {
+        id: 0,
+        name: "Anonymous",
+        dob: new Date().toISOString(),
+        patient_uid: `anonymous-${Date.now()}`,
+        patient_details: {
+          id: 0,
+          height: 0,
+          weight: 0,
+          medications: [],
+          conditions: [],
+          notes: []
+        }
+      };
+
+      const batch = await saveRecordingBatch({
+        patient: anonymousPatient,
+        step_id: WorkflowSteps.SelectLocation,
+        skin_barriers: [],
+        start_time: new Date().toISOString(),
+        is_complete: false,
+        recordings: [],
+        selected_recordings: []
+      });
+      setCurrentRecordingBatch(batch);
+    } catch (error) {
+      console.error('Failed to create anonymous recording batch:', error);
+    }
+  };
 
   const steps = [
     {
@@ -122,117 +158,116 @@ function QuickScanPage(): JSX.Element {
     },
   ];
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime((prev) => {
-          if (prev >= 30) {
-            handleStopRecording();
-            return 30;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording]);
+  // Recording timer is now handled by useAudioRecording hook
 
   const handleStartRecording = async (): Promise<void> => {
     if (!selectedHeartArea) {
       alert("Please select a heart area to record");
       return;
     }
+    // Patient selection not required for Quick Scan
     if (isRecording) {
       return;
     }
 
     try {
       clearError();
-      console.log("Starting microphone...");
-      await startMicrophone();
-      console.log("Microphone started, analyser:", analyser);
-      setIsRecording(true);
-      setRecordingTime(0);
-    } catch (microphoneError) {
-      console.error("Microphone start failed", microphoneError);
+      await startAudioRecording();
+    } catch (error) {
+      console.error("Recording start failed:", error);
     }
   };
 
-  const handleStopRecording = (): void => {
-    stopMicrophone();
-
+  const handleStopRecording = async (): Promise<void> => {
     if (!isRecording) {
-      setSelectedHeartArea("");
       return;
     }
-
-    setIsRecording(false);
 
     const currentArea = selectedHeartArea;
-
-    if (!currentArea) {
-      setSelectedHeartArea("");
+    if (!currentArea || !currentRecordingBatch) {
       return;
     }
 
-    // Mark this area as completed and store mock result
-    const newCompletedRecordings = {
-      ...completedRecordings,
-      [currentArea]: true,
-    };
+    try {
+      const recordingData = await stopAudioRecording();
 
-    setCompletedRecordings(newCompletedRecordings);
+      if (recordingData) {
+        // Save the recording to IndexedDB
+        const recording = await saveRecording({
+          recording_batch_id: currentRecordingBatch.id,
+          device_id: 1, // Default device ID
+          location: currentArea,
+          audio: recordingData.blob,
+          start_time: new Date(Date.now() - recordingData.duration).toISOString(),
+        });
 
-    console.log(selectedHeartArea);
+        // Mark this area as completed
+        const newCompletedRecordings = {
+          ...completedRecordings,
+          [currentArea]: true,
+        };
+        setCompletedRecordings(newCompletedRecordings);
 
-    // Store mock recording result with skin barrier data
-    setRecordingResults((prev) => ({
-      ...prev,
-      [currentArea]: {
-        duration: recordingTime,
-        heartRate: Math.floor(Math.random() * 20) + 60, // 60-80 BPM
-        rhythm: Math.random() > 0.8 ? "Irregular" : "Regular",
-        quality: Math.random() > 0.7 ? "Poor" : "Good",
-        timestamp: new Date().toISOString(),
-        skinBarriers: skinBarriers,
-      },
-    }));
+        // Store recording result
+        setRecordingResults((prev) => ({
+          ...prev,
+          [currentArea]: recording,
+        }));
 
-    // Reset selection for next recording
-    // setSelectedHeartArea("");
+        // Update recording batch with new recording
+        const updatedBatch = {
+          ...currentRecordingBatch,
+          recordings: [...currentRecordingBatch.recordings, recording],
+          selected_recordings: [...currentRecordingBatch.selected_recordings, recording.id]
+        };
 
-    // Check if all areas are completed - but don't auto-start analysis
-    const allCompleted = Object.values(newCompletedRecordings).every(
-      (completed) => completed,
-    );
+        await updateRecordingBatch(updatedBatch);
+        setCurrentRecordingBatch(updatedBatch);
 
-    // Don't automatically start analysis - let user decide when to analyze
-    if (allCompleted) {
-      setCurrentStep(WorkflowSteps.Record);
-      // Start comprehensive analysis
-      setTimeout(() => {
-        setCurrentStep(WorkflowSteps.Complete);
-        setAnalysisComplete(true);
-      }, 4000);
+        // Check if all areas are completed
+        const allCompleted = Object.values(newCompletedRecordings).every(
+          (completed) => completed,
+        );
+
+        if (allCompleted) {
+          // Mark batch as complete
+          const completeBatch = {
+            ...updatedBatch,
+            is_complete: true,
+            step_id: WorkflowSteps.Complete
+          };
+          await updateRecordingBatch(completeBatch);
+          setCurrentRecordingBatch(completeBatch);
+
+          setCurrentStep(WorkflowSteps.Record);
+          // Start comprehensive analysis
+          setTimeout(() => {
+            setCurrentStep(WorkflowSteps.Complete);
+            setAnalysisComplete(true);
+          }, 2000);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save recording:', error);
+      alert('Failed to save recording. Please try again.');
     }
   };
 
   const handleReset = (): void => {
-    stopMicrophone();
-    setIsRecording(false);
-    setRecordingTime(0);
     setCurrentStep(WorkflowSteps.SelectPatient);
     setAnalysisComplete(false);
     setSelectedHeartArea("");
+    setCurrentRecordingBatch(null);
     setCompletedRecordings({
       [HeartLocationEnum.Aortic]: false,
       [HeartLocationEnum.Pulmonary]: false,
       [HeartLocationEnum.Tricuspid]: false,
       [HeartLocationEnum.Mitral]: false
     });
-    setRecordingResults({} as Partial<Record<HeartLocation, any>>);
+    setRecordingResults({});
     setSkinBarriers([]);
+    // Create new anonymous batch for next session
+    createAnonymousRecordingBatch();
   };
 
   const canStartRecording = selectedHeartArea;
@@ -249,9 +284,10 @@ function QuickScanPage(): JSX.Element {
     }
   }, [selectedHeartArea, currentStep, isRecording, analysisComplete]);
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+  const formatTime = (milliseconds: number): string => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
@@ -599,7 +635,7 @@ function QuickScanPage(): JSX.Element {
                       {/* <div className="text-white/60 text-sm">{area.description}</div> */}
                       {recordingResults[area.key] && (
                         <div className="text-xs text-white/50 mt-1">
-                          Duration: {recordingResults[area.key].duration}s
+                          Recorded: {recordingResults[area.key] ? new Date(recordingResults[area.key]!.start_time).toLocaleTimeString() : ''}
                         </div>
                       )}
                     </div>
