@@ -79,6 +79,7 @@ function QuickScanPage(): JSX.Element {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [selectedHeartArea, setSelectedHeartArea] = useState<HeartLocation | "">("");
   const [currentRecordingBatch, setCurrentRecordingBatch] = useState<RecordingBatch | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [completedRecordings, setCompletedRecordings] = useState<
     Record<HeartLocation, boolean>
   >({
@@ -103,28 +104,52 @@ function QuickScanPage(): JSX.Element {
     clearError,
   } = useAudioRecording(30000); // 30 second max
 
-  // Create recording batch on component mount for anonymous recording
+  // Create recording batch on component mount - check for patient data first
   useEffect(() => {
     if (!currentRecordingBatch) {
-      createAnonymousRecordingBatch();
+      const patientFromNav = location.state?.patient as Patient | undefined;
+      if (patientFromNav) {
+        setSelectedPatient(patientFromNav);
+        createPatientRecordingBatch(patientFromNav);
+      } else {
+        createAnonymousRecordingBatch();
+      }
     }
-  }, []);
+  }, [location.state]);
+
+  const createPatientRecordingBatch = async (patient: Patient) => {
+    try {
+      const batch = await saveRecordingBatch({
+        patient: patient,
+        step_id: WorkflowSteps.SelectLocation,
+        skin_barriers: [],
+        start_time: new Date().toISOString(),
+        is_complete: false,
+        recordings: [],
+        selected_recordings: []
+      });
+      setCurrentRecordingBatch(batch);
+    } catch (error) {
+      console.error('Failed to create patient recording batch:', error);
+    }
+  };
 
   const createAnonymousRecordingBatch = async () => {
     try {
-      // Create anonymous patient for Quick Scan recordings
+      // Create anonymous patient for Quick Scan recordings with better description
+      const sessionTimestamp = new Date().toLocaleString();
       const anonymousPatient: Patient = {
         id: 0,
-        name: "Anonymous",
+        name: "Quick Scan Session",
         dob: new Date().toISOString(),
-        patient_uid: `anonymous-${Date.now()}`,
+        patient_uid: `quickscan-${Date.now()}`,
         patient_details: {
           id: 0,
           height: 0,
           weight: 0,
           medications: [],
           conditions: [],
-          notes: []
+          notes: [`Anonymous recording session started at ${sessionTimestamp}`]
         }
       };
 
@@ -318,6 +343,7 @@ function QuickScanPage(): JSX.Element {
     setAnalysisComplete(false);
     setSelectedHeartArea("");
     setCurrentRecordingBatch(null);
+    setSelectedPatient(null);
     setCompletedRecordings({
       [HeartLocationEnum.Aortic]: false,
       [HeartLocationEnum.Pulmonary]: false,
@@ -446,6 +472,28 @@ function QuickScanPage(): JSX.Element {
 
   return (
     <div className="quick-scan-container">
+      {/* Patient Information Section - Only show when recording for a specific patient */}
+      {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (
+        <section className="patient-info-section mb-6">
+          <GlassCard padding="md" className="w-full max-w-3xl">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                {selectedPatient.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-white text-xl font-semibold mb-1">
+                  {selectedPatient.name}
+                </h2>
+                <div className="flex gap-6 text-white/70 text-sm">
+                  <span>ID: {selectedPatient.patient_uid}</span>
+                  <span>DOB: {new Date(selectedPatient.dob).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </section>
+      )}
+
       {/* Section 1: Skin Barriers Configuration */}
       <section id="section-0" className="snap-section section-1">
         <GlassCard
