@@ -183,13 +183,17 @@ function QuickScanPage(): JSX.Element {
       return;
     }
 
-    const currentArea = selectedHeartArea;
-    if (!currentArea || !currentRecordingBatch) {
+    // Ensure selectedHeartArea is a valid HeartLocation, not empty string
+    if (!isValidHeartLocation(selectedHeartArea) || !currentRecordingBatch) {
+      console.error('Invalid heart area selected:', selectedHeartArea);
       return;
     }
 
+    const currentArea: HeartLocation = selectedHeartArea;
+
     try {
       const recordingData = await stopAudioRecording();
+      console.log('Recording data received:', recordingData);
 
       if (recordingData) {
         // Save the recording to IndexedDB
@@ -246,10 +250,66 @@ function QuickScanPage(): JSX.Element {
             setAnalysisComplete(true);
           }, 2000);
         }
+      } else {
+        console.error('No recording data received from stopAudioRecording');
+        alert('Recording failed - no audio data was captured. Please try again.');
       }
     } catch (error) {
       console.error('Failed to save recording:', error);
       alert('Failed to save recording. Please try again.');
+    }
+  };
+
+  const handleRedoRecording = async (heartArea: HeartLocation): Promise<void> => {
+    if (!currentRecordingBatch) {
+      console.error('No current recording batch available for redo');
+      return;
+    }
+
+    try {
+      // Find and remove the existing recording for this heart area
+      const existingRecording = recordingResults[heartArea];
+      if (existingRecording && currentRecordingBatch.recordings) {
+        // Remove the recording from the batch
+        const updatedRecordings = currentRecordingBatch.recordings.filter(
+          (recording) => recording.location !== heartArea
+        );
+        const updatedSelectedRecordings = currentRecordingBatch.selected_recordings.filter(
+          (recordingId) => recordingId !== existingRecording.id
+        );
+
+        // Update the recording batch
+        const updatedBatch = {
+          ...currentRecordingBatch,
+          recordings: updatedRecordings,
+          selected_recordings: updatedSelectedRecordings,
+          is_complete: false // Mark as incomplete since we're redoing
+        };
+
+        await updateRecordingBatch(updatedBatch);
+        setCurrentRecordingBatch(updatedBatch);
+      }
+
+      // Reset the completion status for this area
+      setCompletedRecordings(prev => ({
+        ...prev,
+        [heartArea]: false
+      }));
+
+      // Remove from recording results
+      setRecordingResults(prev => {
+        const newResults = { ...prev };
+        delete newResults[heartArea];
+        return newResults;
+      });
+
+      // Select this area for recording
+      setSelectedHeartArea(heartArea);
+
+      console.log(`Redo recording prepared for ${heartArea} valve`);
+    } catch (error) {
+      console.error('Failed to prepare redo recording:', error);
+      alert('Failed to prepare redo recording. Please try again.');
     }
   };
 
@@ -271,6 +331,11 @@ function QuickScanPage(): JSX.Element {
   };
 
   const canStartRecording = selectedHeartArea;
+
+  // Type guard to check if selectedHeartArea is a valid HeartLocation
+  const isValidHeartLocation = (area: HeartLocation | ""): area is HeartLocation => {
+    return area !== "";
+  };
 
   // Auto advance to step 1 when heart area is selected
   useEffect(() => {
@@ -557,10 +622,8 @@ function QuickScanPage(): JSX.Element {
                 selectedHeartArea={selectedHeartArea}
                 completedRecordings={completedRecordings}
                 onAreaClick={(area) => {
-                  // Only allow selection if the area is not already completed
-                  if (!completedRecordings[area]) {
-                    setSelectedHeartArea(area);
-                  }
+                  // Always allow selection of heart areas
+                  setSelectedHeartArea(area);
                 }}
               />
             </div>
@@ -602,10 +665,7 @@ function QuickScanPage(): JSX.Element {
                         ? "bg-white/20 border-white/40 cursor-pointer"
                         : "bg-white/10 border-white/20 cursor-pointer hover:bg-white/15"
                   }`}
-                  onClick={() =>
-                    !completedRecordings[area.key] &&
-                    setSelectedHeartArea(area.key)
-                  }
+                  onClick={() => setSelectedHeartArea(area.key)}
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -627,9 +687,19 @@ function QuickScanPage(): JSX.Element {
                           {area.label}
                         </div>
                         {completedRecordings[area.key] && (
-                          <span className="text-green-400 text-xs">
-                            Completed
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-400 text-xs">
+                              Completed
+                            </span>
+                            <GlassButton
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleRedoRecording(area.key)}
+                              className="text-xs px-2 py-1"
+                            >
+                              Redo
+                            </GlassButton>
+                          </div>
                         )}
                       </div>
                       {/* <div className="text-white/60 text-sm">{area.description}</div> */}
@@ -737,13 +807,13 @@ function QuickScanPage(): JSX.Element {
             {recordingTime > 0 && (
               <div className="w-full max-w-md">
                 <Progress
-                  percent={(recordingTime / 30) * 100}
+                  percent={(recordingTime / 30000) * 100}
                   showInfo={false}
                   strokeColor="#8C7DD1"
                   trailColor="rgba(255,255,255,0.2)"
                 />
                 <p className="text-white/60 text-center mt-2">
-                  {30 - recordingTime} seconds remaining
+                  {Math.max(0, Math.ceil((30000 - recordingTime) / 1000))} seconds remaining
                 </p>
               </div>
             )}
@@ -752,22 +822,50 @@ function QuickScanPage(): JSX.Element {
           {/* Recording Controls */}
           <div className="recording-controls text-center mb-8">
             {!isRecording && !analysisComplete && (
-              <GlassButton
-                variant="primary"
-                size="lg"
-                icon={<PlayCircleOutlined />}
-                onClick={handleStartRecording}
-                disabled={
-                  !selectedHeartArea || completedRecordings[selectedHeartArea]
-                }
-                className="mb-4"
-              >
-                {selectedHeartArea && !completedRecordings[selectedHeartArea]
-                  ? `Start Recording`
-                  : completedRecordings[selectedHeartArea]
-                    ? "Recording Complete"
-                    : "Please select a heart area to record"}
-              </GlassButton>
+              <div>
+                {isValidHeartLocation(selectedHeartArea) && completedRecordings[selectedHeartArea] ? (
+                  // Show redo options for completed areas
+                  <div className="space-y-3">
+                    <p className="text-green-400 text-lg mb-4">
+                      ✓ {heartAreas.find(area => area.key === selectedHeartArea)?.label} recording complete
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <GlassButton
+                        variant="secondary"
+                        size="lg"
+                        onClick={() => handleRedoRecording(selectedHeartArea)}
+                        className="mb-4"
+                      >
+                        Redo Recording
+                      </GlassButton>
+                      {Object.values(completedRecordings).filter(Boolean).length < 4 && (
+                        <GlassButton
+                          variant="primary"
+                          size="lg"
+                          onClick={() => scrollToSection(1)}
+                          className="mb-4"
+                        >
+                          Record Other Areas
+                        </GlassButton>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // Show normal recording button for incomplete areas
+                  <GlassButton
+                    variant="primary"
+                    size="lg"
+                    icon={<PlayCircleOutlined />}
+                    onClick={handleStartRecording}
+                    disabled={!isValidHeartLocation(selectedHeartArea)}
+                    className="mb-4"
+                  >
+                    {isValidHeartLocation(selectedHeartArea)
+                      ? "Start Recording"
+                      : "Please select a heart area to record"}
+                  </GlassButton>
+                )}
+              </div>
             )}
 
             {isRecording && (
@@ -860,7 +958,7 @@ function QuickScanPage(): JSX.Element {
               <div>yo</div>
             ))} */}
             {/* skinBarriers.map((barrier, index) => ( */}
-            {completedRecordings[selectedHeartArea] &&
+            {isValidHeartLocation(selectedHeartArea) && completedRecordings[selectedHeartArea] &&
               !Object.values(completedRecordings).every(Boolean) && (
                 <GlassButton
                   variant="primary"
@@ -871,7 +969,7 @@ function QuickScanPage(): JSX.Element {
                 </GlassButton>
               )}
 
-            {!completedRecordings[selectedHeartArea] &&
+            {isValidHeartLocation(selectedHeartArea) && !completedRecordings[selectedHeartArea] &&
               !Object.values(completedRecordings).every(Boolean) && (
                 <GlassButton
                   variant="secondary"

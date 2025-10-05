@@ -70,6 +70,7 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
   const chunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingPromiseResolverRef = useRef<((data: RecordingData | null) => void) | null>(null);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -144,12 +145,26 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
         };
 
         setRecordingData(data);
+
+        // Resolve the promise with the recording data
+        if (recordingPromiseResolverRef.current) {
+          recordingPromiseResolverRef.current(data);
+          recordingPromiseResolverRef.current = null;
+        }
+
         cleanup();
       };
 
       mediaRecorder.onerror = (event) => {
         console.error('MediaRecorder error:', event);
         setError('Recording failed. Please try again.');
+
+        // Resolve the promise with null in case of error
+        if (recordingPromiseResolverRef.current) {
+          recordingPromiseResolverRef.current(null);
+          recordingPromiseResolverRef.current = null;
+        }
+
         cleanup();
       };
 
@@ -194,6 +209,11 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
     }
 
     try {
+      // Create a promise that resolves when MediaRecorder finishes
+      const recordingPromise = new Promise<RecordingData | null>((resolve) => {
+        recordingPromiseResolverRef.current = resolve;
+      });
+
       // Stop the MediaRecorder
       if (mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
@@ -211,12 +231,20 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
         timerRef.current = null;
       }
 
-      // Return current recording data (will be updated by onstop handler)
-      return recordingData;
+      // Wait for the MediaRecorder to complete processing
+      const finalRecordingData = await recordingPromise;
+      return finalRecordingData;
 
     } catch (stopError) {
       console.error('Error stopping recording:', stopError);
       setError('Failed to stop recording properly.');
+
+      // Clean up the promise resolver
+      if (recordingPromiseResolverRef.current) {
+        recordingPromiseResolverRef.current(null);
+        recordingPromiseResolverRef.current = null;
+      }
+
       cleanup();
       return null;
     }
@@ -288,6 +316,12 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
+    }
+
+    // Clean up promise resolver
+    if (recordingPromiseResolverRef.current) {
+      recordingPromiseResolverRef.current(null);
+      recordingPromiseResolverRef.current = null;
     }
 
     // Stop microphone
