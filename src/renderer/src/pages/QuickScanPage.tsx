@@ -18,43 +18,53 @@ import Title from "antd/es/typography/Title";
 import "./QuickScan.css";
 import "../styles/theme.css";
 import HeartDiagram from "@renderer/components/HeartLocationDiagram";
+import { Steps as WorkflowSteps, stepsTranslations } from "../enums/steps";
+import type HeartLocation from "../types/HeartLocation";
+import HeartLocationEnum from "../types/HeartLocation";
+import type SkinBarrier from "../types/SkinBarrier";
+import type SkinBarrierLevel from "../enums/SkinBarrierLevel";
+import SkinBarrierLevelEnum from "../enums/SkinBarrierLevel";
+import type SkinBarrierOptions from "../enums/SkinBarrierOptions";
+import SkinBarrierOptionsEnum from "../enums/SkinBarrierOptions";
+import type Recording from "../types/Recording";
+import type RecordingBatch from "../types/RecordingBatch";
+import type Patient from "../types/Patient";
 
 const { Step } = Steps;
 const { Option } = Select;
-interface HeartArea {
-  key: string;
+
+interface HeartAreaInfo {
+  key: HeartLocation;
   label: string;
   description: string;
   icon: string;
 }
 
-interface SkinBarrier {
+interface LocalSkinBarrier extends SkinBarrier {
   id: string;
-  type: "stickers" | "scars" | "fat" | "hair";
-  severity: "mild" | "moderate" | "severe";
 }
 
-const heartAreas: HeartArea[] = [
+const heartAreas: HeartAreaInfo[] = [
   {
-    key: "aortic",
+    key: HeartLocationEnum.Aortic,
     label: "Aortic Valve",
     description: "2nd intercostal space, right sternal border",
     icon: "",
   },
   {
-    key: "pulmonary",
+    key: HeartLocationEnum.Pulmonary,
     label: "Pulmonary Valve",
     description: "2nd intercostal space, left sternal border",
     icon: "",
   },
   {
-    key: "tricuspid",
+    key: HeartLocationEnum.Tricuspid,
     label: "Tricuspid Valve",
     description: "4th intercostal space, left sternal border",
     icon: "",
   },
   {
-    key: "mitral",
+    key: HeartLocationEnum.Mitral,
     label: "Mitral Valve",
     description: "5th intercostal space, apex",
     icon: "",
@@ -65,17 +75,22 @@ function QuickScanPage(): JSX.Element {
   const location = useLocation();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState<number>(WorkflowSteps.SelectPatient);
   const [analysisComplete, setAnalysisComplete] = useState(false);
-  const [selectedHeartArea, setSelectedHeartArea] = useState<string>("");
+  const [selectedHeartArea, setSelectedHeartArea] = useState<HeartLocation | "">("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const [completedRecordings, setCompletedRecordings] = useState<
-    Record<string, boolean>
-  >({ aortic: false, pulmonary: false, tricuspid: false, mitral: false });
-  const [recordingResults, setRecordingResults] = useState<Record<string, any>>(
+    Record<HeartLocation, boolean>
+  >({
+    [HeartLocationEnum.Aortic]: false,
+    [HeartLocationEnum.Pulmonary]: false,
+    [HeartLocationEnum.Tricuspid]: false,
+    [HeartLocationEnum.Mitral]: false
+  });
+  const [recordingResults, setRecordingResults] = useState<Partial<Record<HeartLocation, any>>>(
     {},
   );
-  const [skinBarriers, setSkinBarriers] = useState<SkinBarrier[]>([]);
+  const [skinBarriers, setSkinBarriers] = useState<LocalSkinBarrier[]>([]);
   const [currentSection, setCurrentSection] = useState(0);
   const {
     analyser,
@@ -94,7 +109,7 @@ function QuickScanPage(): JSX.Element {
 
   const steps = [
     {
-      title: "Record All Areas",
+      title: stepsTranslations[WorkflowSteps.SelectLocation],
       description: "Complete recordings for all 4 heart valve areas",
     },
     {
@@ -102,7 +117,7 @@ function QuickScanPage(): JSX.Element {
       description: "AI analyzing all heart sounds together",
     },
     {
-      title: "Complete Results",
+      title: stepsTranslations[WorkflowSteps.Complete],
       description: "View comprehensive heart analysis",
     },
   ];
@@ -194,10 +209,10 @@ function QuickScanPage(): JSX.Element {
 
     // Don't automatically start analysis - let user decide when to analyze
     if (allCompleted) {
-      setCurrentStep(1);
+      setCurrentStep(WorkflowSteps.Record);
       // Start comprehensive analysis
       setTimeout(() => {
-        setCurrentStep(2);
+        setCurrentStep(WorkflowSteps.Complete);
         setAnalysisComplete(true);
       }, 4000);
     }
@@ -207,16 +222,16 @@ function QuickScanPage(): JSX.Element {
     stopMicrophone();
     setIsRecording(false);
     setRecordingTime(0);
-    setCurrentStep(0);
+    setCurrentStep(WorkflowSteps.SelectPatient);
     setAnalysisComplete(false);
     setSelectedHeartArea("");
     setCompletedRecordings({
-      aortic: false,
-      pulmonary: false,
-      tricuspid: false,
-      mitral: false,
+      [HeartLocationEnum.Aortic]: false,
+      [HeartLocationEnum.Pulmonary]: false,
+      [HeartLocationEnum.Tricuspid]: false,
+      [HeartLocationEnum.Mitral]: false
     });
-    setRecordingResults({});
+    setRecordingResults({} as Partial<Record<HeartLocation, any>>);
     setSkinBarriers([]);
   };
 
@@ -226,11 +241,11 @@ function QuickScanPage(): JSX.Element {
   useEffect(() => {
     if (
       selectedHeartArea &&
-      currentStep === 0 &&
+      currentStep === WorkflowSteps.SelectPatient &&
       !isRecording &&
       !analysisComplete
     ) {
-      // Stay on step 0 until user manually proceeds
+      // Stay on step SelectPatient until user manually proceeds
     }
   }, [selectedHeartArea, currentStep, isRecording, analysisComplete]);
 
@@ -255,30 +270,30 @@ function QuickScanPage(): JSX.Element {
     }
 
     // Find the first available type
-    const existingTypes = skinBarriers.map((barrier) => barrier.type);
-    const availableTypes = ["stickers", "scars", "fat", "hair"].filter(
-      (type) => !existingTypes.includes(type as any),
+    const existingTypes = skinBarriers.map((barrier) => barrier.option);
+    const availableTypes = Object.values(SkinBarrierOptionsEnum).filter(
+      (type) => !existingTypes.includes(type),
     );
 
     if (availableTypes.length === 0) {
       return; // All types already exist
     }
 
-    const newBarrier: SkinBarrier = {
+    const newBarrier: LocalSkinBarrier = {
       id: `barrier-${Date.now()}`,
-      type: availableTypes[0] as "stickers" | "scars" | "fat" | "hair",
-      severity: "mild",
+      level: SkinBarrierLevelEnum.Mild,
+      option: availableTypes[0],
     };
     setSkinBarriers((prev) => [...prev, newBarrier]);
   };
 
   const getAvailableTypes = (
     currentBarrierId?: string,
-  ): ("stickers" | "scars" | "fat")[] => {
+  ): SkinBarrierOptions[] => {
     const existingTypes = skinBarriers
       .filter((barrier) => barrier.id !== currentBarrierId)
-      .map((barrier) => barrier.type);
-    return ["stickers", "scars", "fat", "hair"].filter(
+      .map((barrier) => barrier.option);
+    return Object.values(SkinBarrierOptionsEnum).filter(
       (type) => !existingTypes.includes(type),
     );
   };
@@ -289,13 +304,13 @@ function QuickScanPage(): JSX.Element {
 
   const updateSkinBarrier = (
     id: string,
-    field: "type" | "severity",
+    field: "option" | "level",
     value: string,
   ): void => {
-    if (field === "type") {
+    if (field === "option") {
       // Check if this type is already used by another barrier
       const existingBarrierWithType = skinBarriers.find(
-        (barrier) => barrier.id !== id && barrier.type === value,
+        (barrier) => barrier.id !== id && barrier.option === value,
       );
       if (existingBarrierWithType) {
         return; // Don't allow duplicate types
@@ -372,22 +387,22 @@ function QuickScanPage(): JSX.Element {
                             Barrier Type
                           </label>
                           <Select
-                            value={barrier.type}
+                            value={barrier.option}
                             onChange={(value) =>
-                              updateSkinBarrier(barrier.id, "type", value)
+                              updateSkinBarrier(barrier.id, "option", value)
                             }
                             className="w-full"
                             size="large"
                             style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
                           >
                             {/* Current type is always available */}
-                            <Option value={barrier.type}>
-                              {barrier.type.charAt(0).toUpperCase() +
-                                barrier.type.slice(1)}
+                            <Option value={barrier.option}>
+                              {barrier.option.charAt(0).toUpperCase() +
+                                barrier.option.slice(1)}
                             </Option>
                             {/* Show other available types */}
                             {getAvailableTypes(barrier.id)
-                              .filter((type) => type !== barrier.type)
+                              .filter((type) => type !== barrier.option)
                               .map((type) => (
                                 <Option key={type} value={type}>
                                   {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -401,9 +416,9 @@ function QuickScanPage(): JSX.Element {
                             Severity Level
                           </label>
                           <Select
-                            value={barrier.severity}
+                            value={barrier.level}
                             onChange={(value) =>
-                              updateSkinBarrier(barrier.id, "severity", value)
+                              updateSkinBarrier(barrier.id, "level", value)
                             }
                             className="w-full"
                             size="large"
@@ -443,7 +458,7 @@ function QuickScanPage(): JSX.Element {
               {skinBarriers.length >= 4 && (
                 <p className="text-white/60 text-sm mt-2">
                   Maximum barriers reached. You have all available barrier types
-                  (stickers, scars, fat, hair).
+                  ({Object.values(SkinBarrierOptionsEnum).join(", ")}).
                 </p>
               )}
             </div>
@@ -740,7 +755,7 @@ function QuickScanPage(): JSX.Element {
                   <GlassButton
                     variant="success"
                     size="lg"
-                    onClick={() => setCurrentStep(1)}
+                    onClick={() => setCurrentStep(WorkflowSteps.Record)}
                     className="mb-4"
                   >
                     Start Comprehensive Analysis
@@ -770,7 +785,7 @@ function QuickScanPage(): JSX.Element {
                             key={barrier.id}
                             className="text-yellow-300/80 text-sm"
                           >
-                            {index + 1}. {barrier.severity} {barrier.type}
+                            {index + 1}. {barrier.level} {barrier.option}
                           </div>
                         ))}
                       </div>

@@ -15,92 +15,103 @@ import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
+import type Recording from "../types/Recording";
+import type HeartLocation from "../types/HeartLocation";
+import HeartLocationEnum from "../types/HeartLocation";
+import type Label from "../types/Label";
+import LabelEnum from "../types/Label";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-interface Recording {
-  id: number;
-  patientId: number;
+interface ExtendedRecording extends Recording {
   patientName: string;
   date: string;
   time: string;
   duration: string;
-  heartArea: "aortic" | "pulmonary" | "tricuspid" | "mitral";
-  result: "Normal" | "Abnormal" | "Pending";
+  result: Label;
   status: "completed" | "flagged" | "processing";
-  deviceId?: string;
   notes?: string;
 }
 
-const mockRecordings: Recording[] = [
+const mockRecordings: ExtendedRecording[] = [
   {
     id: 1,
-    patientId: 1,
+    recording_batch_id: 1,
+    device_id: 1,
+    location: HeartLocationEnum.Mitral,
+    audio: new Blob(),
+    start_time: "2024-01-15T10:30:00Z",
     patientName: "Liam Carter",
     date: "2024-01-15",
     time: "10:30 AM",
     duration: "45s",
-    heartArea: "mitral",
-    result: "Normal",
+    result: LabelEnum.Normal,
     status: "completed",
-    deviceId: "steth-001",
     notes: "Clear heart sounds, no murmurs detected"
   },
   {
     id: 2,
-    patientId: 1,
+    recording_batch_id: 1,
+    device_id: 1,
+    location: HeartLocationEnum.Aortic,
+    audio: new Blob(),
+    start_time: "2024-01-10T14:15:00Z",
     patientName: "Liam Carter", 
     date: "2024-01-10",
     time: "2:15 PM",
     duration: "38s",
-    heartArea: "aortic",
-    result: "Normal",
-    status: "completed",
-    deviceId: "steth-001"
+    result: LabelEnum.Normal,
+    status: "completed"
   },
   {
     id: 3,
-    patientId: 2,
+    recording_batch_id: 2,
+    device_id: 2,
+    location: HeartLocationEnum.Tricuspid,
+    audio: new Blob(),
+    start_time: "2024-01-05T09:45:00Z",
     patientName: "Sarah Johnson",
     date: "2024-01-05", 
     time: "9:45 AM",
     duration: "52s",
-    heartArea: "tricuspid",
-    result: "Abnormal",
+    result: LabelEnum.Abnormal,
     status: "flagged",
-    deviceId: "steth-002",
     notes: "Irregular heart rhythm detected, recommend further evaluation"
   },
   {
     id: 4,
-    patientId: 3,
+    recording_batch_id: 3,
+    device_id: 1,
+    location: HeartLocationEnum.Pulmonary,
+    audio: new Blob(),
+    start_time: "2024-01-20T11:00:00Z",
     patientName: "Michael Brown",
     date: "2024-01-20",
     time: "11:00 AM", 
     duration: "41s",
-    heartArea: "pulmonary",
-    result: "Normal",
-    status: "completed",
-    deviceId: "steth-001"
+    result: LabelEnum.Normal,
+    status: "completed"
   },
   {
     id: 5,
-    patientId: 2,
+    recording_batch_id: 2,
+    device_id: 1,
+    location: HeartLocationEnum.Aortic,
+    audio: new Blob(),
+    start_time: "2024-01-22T15:30:00Z",
     patientName: "Sarah Johnson",
     date: "2024-01-22",
     time: "3:30 PM",
     duration: "35s", 
-    heartArea: "aortic",
-    result: "Pending",
-    status: "processing",
-    deviceId: "steth-001"
+    result: LabelEnum.Unknown,
+    status: "processing"
   }
 ];
 
 function RecordingsList(): JSX.Element {
-  const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [filteredRecordings, setFilteredRecordings] = useState<Recording[]>([]);
+  const [recordings, setRecordings] = useState<ExtendedRecording[]>([]);
+  const [filteredRecordings, setFilteredRecordings] = useState<ExtendedRecording[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [heartAreaFilter, setHeartAreaFilter] = useState<string>("all");
@@ -134,7 +145,7 @@ function RecordingsList(): JSX.Element {
     if (searchTerm) {
       filtered = filtered.filter(recording =>
         recording.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        recording.heartArea.toLowerCase().includes(searchTerm.toLowerCase())
+        recording.location.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -143,7 +154,7 @@ function RecordingsList(): JSX.Element {
     }
 
     if (heartAreaFilter !== "all") {
-      filtered = filtered.filter(recording => recording.heartArea === heartAreaFilter);
+      filtered = filtered.filter(recording => recording.location === heartAreaFilter);
     }
 
     if (dateRange) {
@@ -170,11 +181,12 @@ function RecordingsList(): JSX.Element {
     }
   };
 
-  const getResultColor = (result: string) => {
+  const getResultColor = (result: Label) => {
     switch (result) {
-      case "Normal": return "#10b981";
-      case "Abnormal": return "#ef4444";
-      case "Pending": return "#f59e0b";
+      case LabelEnum.Normal: return "#10b981";
+      case LabelEnum.Abnormal: return "#ef4444";
+      case LabelEnum.Unknown: return "#f59e0b";
+      case LabelEnum.Unlabelled: return "#6b7280";
       default: return "#6b7280";
     }
   };
@@ -241,10 +253,10 @@ function RecordingsList(): JSX.Element {
               }}
             >
               <Option value="all">All Areas</Option>
-              <Option value="aortic">Aortic</Option>
-              <Option value="pulmonary">Pulmonary</Option>
-              <Option value="tricuspid">Tricuspid</Option>
-              <Option value="mitral">Mitral</Option>
+              <Option value={HeartLocationEnum.Aortic}>Aortic</Option>
+              <Option value={HeartLocationEnum.Pulmonary}>Pulmonary</Option>
+              <Option value={HeartLocationEnum.Tricuspid}>Tricuspid</Option>
+              <Option value={HeartLocationEnum.Mitral}>Mitral</Option>
             </Select>
           </div>
 
@@ -252,7 +264,7 @@ function RecordingsList(): JSX.Element {
             <label className="text-white/70 text-sm block mb-2">Date Range</label>
             <RangePicker
               value={dateRange}
-              onChange={setDateRange}
+              onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
               className="w-full"
               size="large"
               style={{ 
@@ -305,7 +317,7 @@ function RecordingsList(): JSX.Element {
                   {/* Recording Info */}
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-white font-semibold text-lg flex-1">
-                        {formatHeartArea(recording.heartArea)} Valve
+                        {formatHeartArea(recording.location)} Valve
                       </h3>
                       <div 
                         className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-3 flex items-center gap-1 justify-center"
