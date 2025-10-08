@@ -15,7 +15,7 @@ const ButtonWithIcon: React.FC<IButtonWithIcon> = ({
 }) => {
   return (
     <div
-      onClick={() => onClick()}
+      onClick={() => onClick?.()}
       className={classNames(
         className,
         "cursor-pointer flex justify-center items-center rounded-md border-[1px] border-solid border-gray w-7 h-7",

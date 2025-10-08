@@ -1,0 +1,99 @@
+name: Release Sonorus App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build-and-release:
+    name: Build and Release Sonorus DMG
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build application
+        run: npm run build:mac
+        env:
+          # Skip notarization for automated builds
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          
+      - name: Find DMG file
+        id: find_dmg
+        run: |
+          DMG_PATH=$(find dist -name "*.dmg" | head -1)
+          echo "dmg_path=$DMG_PATH" >> $GITHUB_OUTPUT
+          echo "dmg_name=$(basename $DMG_PATH)" >> $GITHUB_OUTPUT
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v0.0.1
+          release_name: Sonorus v0.0.1 - Heart Sound Analysis
+          body: |
+            ## Sonorus v0.0.1 - Professional Heart Sound Analysis
+            
+            **Advanced cardiac screening platform for healthcare professionals**
+            
+            ### Features
+            - 🫀 Comprehensive 4-valve heart sound recording (Aortic, Pulmonary, Tricuspid, Mitral)
+            - 🎨 Modern glassmorphic design with light/dark themes
+            - 🖥️ Full-screen native macOS application
+            - 📊 Patient management and recording history
+            - ⚙️ Advanced settings and configuration
+            
+            ### Installation
+            1. Download the `sonorus-1.0.0.dmg` file below
+            2. Open the DMG file
+            3. Drag Sonorus.app to your Applications folder
+            4. Launch Sonorus from Applications
+            
+            ### System Requirements
+            - macOS 10.15 or later
+            - Apple Silicon (M1/M2) or Intel processor
+            
+            ---
+            
+            **Note**: This is an unsigned application. You may need to right-click and select "Open" the first time you launch it.
+            
+            Generated automatically from commit ${{ github.sha }}
+          draft: false
+          prerelease: false
+          
+      - name: Upload DMG to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.find_dmg.outputs.dmg_path }}
+          asset_name: ${{ steps.find_dmg.outputs.dmg_name }}
+          asset_content_type: application/octet-stream
+          
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonorus-macos-build
+          path: |
+            dist/
+            !dist/**/.DS_Store
+          retention-days: 30

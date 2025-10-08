@@ -31,7 +31,7 @@ function FeaturePageLayout(): JSX.Element {
               <img
                 src={image}
                 alt="Sonorus Logo"
-                className="h-8 w-auto mx-auto sonorus-logo"
+                className="h-8 w-32 mx-auto sonorus-logo object-contain"
               />
             </div>
           </div>

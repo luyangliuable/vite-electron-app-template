@@ -1,8 +1,9 @@
-import { app, shell, BrowserWindow, ipcMain, safeStorage } from "electron";
+import { app, shell, BrowserWindow, ipcMain, safeStorage, Menu, screen } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import Store from "electron-store";
+import { createApplicationMenu } from "./menu";
 import { loadReposFromTxt } from "./system/loadReposFromTxt";
 import { exportRepostoTxt } from "./system/exportRepostoTxt";
 import { selectFilesUnderDirectories } from "./system/selectFilesUnderDirectories";
@@ -15,12 +16,15 @@ import {
 import { loadFile } from "./system/loadFile";
 
 function createWindow(): void {
+  // Get screen dimensions
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  
   // Create the browser window with platform-specific styling
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: width,
+    height: height,
     show: false,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false, // Show native menu bar
     // Platform-specific window styling
     ...(process.platform === "darwin"
       ? {
@@ -37,6 +41,10 @@ function createWindow(): void {
 
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
+    
+    // Set up native menu system
+    const menu = createApplicationMenu(mainWindow);
+    Menu.setApplicationMenu(menu);
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

@@ -23,15 +23,15 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Function to get system preference
   const getSystemTheme = (): boolean => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    return true; // Default to dark if can't detect
+    return false; // Default to light if can't detect
   };
 
   // Function to apply theme
@@ -49,7 +49,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         shouldBeDark = getSystemTheme();
         break;
       default:
-        shouldBeDark = true;
+        shouldBeDark = false;
     }
 
     setIsDarkMode(shouldBeDark);
@@ -65,9 +65,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Load theme preference from localStorage
-    const savedTheme = localStorage.getItem('sonorus-theme-mode') as ThemeMode;
-    const initialMode = savedTheme || 'system';
+    // Force light mode as default (clear any previous dark mode preference)
+    const initialMode = 'light';
+    localStorage.setItem('sonorus-theme-mode', 'light');
     setThemeModeState(initialMode);
     applyTheme(initialMode);
 
@@ -83,6 +83,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       mediaQuery.addListener(handleChange);
       return () => mediaQuery.removeListener(handleChange);
     }
+    return undefined;
   }, []);
 
   useEffect(() => {

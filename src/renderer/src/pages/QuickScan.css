@@ -64,7 +64,7 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
 /* Recording Context Panel - Below Patient Info */
 .recording-context-panel {
   position: fixed !important;
-  top: calc(5rem + 280px + 0.25rem) !important; /* Below patient panel with gap */
+  top: calc(5rem + 200px + 0.5rem) !important; /* Below patient panel with smaller gap */
   right: 1rem !important; /* Align with patient panel */
   width: 220px !important; /* Same width as patient panel */
   height: auto !important;
@@ -84,6 +84,175 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   z-index: 998 !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+/* Reduce shadows and improve transparency for side panels */
+.patient-info-section .backdrop-blur-md,
+.recording-context-panel .backdrop-blur-md,
+.recording-context-panel--anonymous .backdrop-blur-md {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important; /* Reduced shadow */
+}
+
+/* Dark mode improvements - more transparency, less blur */
+.dark-theme .backdrop-blur-md {
+  backdrop-filter: blur(8px) !important; /* Reduced from default 12px */
+}
+
+.dark-theme .patient-info-section .backdrop-blur-md,
+.dark-theme .recording-context-panel .backdrop-blur-md,
+.dark-theme .recording-context-panel--anonymous .backdrop-blur-md {
+  background: rgba(255, 255, 255, 0.05) !important; /* More transparency */
+  backdrop-filter: blur(6px) !important; /* Even less blur for side panels */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; /* Minimal shadow */
+}
+
+/* Dark mode form improvements - more specific selectors */
+.dark-theme .ant-modal .ant-modal-content {
+  background: rgba(30, 30, 40, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(172, 172, 230, 0.2) !important;
+}
+
+.dark-theme .ant-modal .ant-form-item-label > label {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark-theme .ant-modal .ant-input {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+  color: white !important;
+}
+
+.dark-theme .ant-modal .ant-select .ant-select-selector {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+  color: white !important;
+}
+
+.dark-theme .ant-modal .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.dark-theme .ant-modal .ant-select .ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.dark-theme .ant-modal .ant-picker {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+}
+
+.dark-theme .ant-modal .ant-picker input {
+  background: transparent !important;
+  color: white !important;
+}
+
+/* Light mode form styling */
+.light-theme .ant-modal .ant-modal-content {
+  background: rgba(248, 250, 252, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(172, 172, 230, 0.3) !important;
+}
+
+.light-theme .ant-modal .ant-input {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.light-theme .ant-modal .ant-select .ant-select-selector {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.light-theme .ant-modal .ant-picker {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+}
+
+.light-theme .ant-modal .ant-picker input {
+  background: transparent !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Modal button fixes */
+.dark-theme .ant-modal .ant-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+  color: white !important;
+}
+
+.dark-theme .ant-modal .ant-btn-primary {
+  background: rgba(140, 125, 209, 0.8) !important;
+  border: 1px solid rgba(140, 125, 209, 1) !important;
+  color: white !important;
+}
+
+.light-theme .ant-modal .ant-btn {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(172, 172, 230, 0.4) !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.light-theme .ant-modal .ant-btn-primary {
+  background: rgba(140, 125, 209, 1) !important;
+  border: 1px solid rgba(140, 125, 209, 1) !important;
+  color: white !important;
+}
+
+/* Dark mode toast/notification fixes */
+.dark-theme .ant-message-notice-content {
+  background: rgba(30, 30, 40, 0.95) !important;
+  border: 1px solid rgba(172, 172, 230, 0.3) !important;
+  color: white !important;
+}
+
+.dark-theme .ant-notification-notice {
+  background: rgba(30, 30, 40, 0.95) !important;
+  border: 1px solid rgba(172, 172, 230, 0.3) !important;
+}
+
+.dark-theme .ant-notification-notice-message {
+  color: white !important;
+}
+
+.dark-theme .ant-notification-notice-description {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Barriers table styling */
+.barriers-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+.barriers-table td.barriers-label {
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.barriers-table td.barriers-value {
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.25rem 0;
+  text-align: right;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+/* Light mode barriers table */
+.light-theme .barriers-table td.barriers-label {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.light-theme .barriers-table td.barriers-value {
+  color: rgba(0, 0, 0, 0.85);
 }
 
 /* Remove top padding from first section since no header above */

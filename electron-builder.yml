@@ -1,7 +1,8 @@
-appId: com.electron.app
-productName: gh-util
+appId: com.sonorus.app
+productName: Sonorus
 directories:
   buildResources: build
+electronDist: node_modules/electron/dist
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -12,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: gh-util
+  executableName: sonorus
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

@@ -1,7 +1,7 @@
 {
-  "name": "electron-practice-app",
+  "name": "sonorus",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "Professional heart sound analysis application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
