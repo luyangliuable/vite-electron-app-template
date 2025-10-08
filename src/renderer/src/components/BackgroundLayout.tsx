@@ -1,6 +1,7 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import background from "../assets/primary_background_3.png";
+import { usePlatform } from "../hooks/usePlatform";
 
 interface BackgroundLayoutProps {
   children: ReactNode;
@@ -8,23 +9,7 @@ interface BackgroundLayoutProps {
 
 function BackgroundLayout({ children }: BackgroundLayoutProps): JSX.Element {
   const { isDarkMode } = useTheme();
-  const [isMacOS, setIsMacOS] = useState(false);
-
-  useEffect(() => {
-    // Detect if running on macOS for traffic light positioning
-    const checkPlatform = async () => {
-      try {
-        // In Electron renderer, we can check user agent or use IPC
-        const platform = navigator.userAgent.toLowerCase();
-        setIsMacOS(platform.includes('mac'));
-      } catch (error) {
-        // Fallback detection
-        setIsMacOS(navigator.platform.toLowerCase().includes('mac'));
-      }
-    };
-    
-    checkPlatform();
-  }, []);
+  const { isMacOS } = usePlatform();
 
   return (
     <>
@@ -43,10 +28,10 @@ function BackgroundLayout({ children }: BackgroundLayoutProps): JSX.Element {
       />
 
       {/* Glassmorphism overlay with brand colors */}
-      <div 
+      <div
         className={`fixed inset-0 w-full h-full z-10 ${
-          isDarkMode 
-            ? 'bg-gradient-to-br from-white/8 via-purple-300/10 to-indigo-200/8' 
+          isDarkMode
+            ? 'bg-gradient-to-br from-white/8 via-purple-300/10 to-indigo-200/8'
             : 'bg-transparent'
         }`}
         style={{ margin: 0, padding: 0 }}
@@ -58,10 +43,10 @@ function BackgroundLayout({ children }: BackgroundLayoutProps): JSX.Element {
       )}
 
       {/* Content container with platform-specific spacing */}
-      <div 
+      <div
         className={`relative z-20 w-full h-full overflow-hidden ${
           isMacOS ? 'pt-4' : ''
-        }`} 
+        }`}
         style={{ margin: 0, padding: 0 }}
       >
         {children}

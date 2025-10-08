@@ -1,11 +1,15 @@
+import React from "react";
 import BackButton from "./BackButton";
 import Navbar from "./Navbar";
 import { Outlet } from "react-router-dom";
 import "./FeaturePageLayout.css";
 import BackgroundLayout from "./BackgroundLayout";
 import image from "../assets/sn_primary_logo.png";
+import { usePlatform } from "../hooks/usePlatform";
 
 function FeaturePageLayout(): JSX.Element {
+  const { isMacOS } = usePlatform();
+
   return (
     <BackgroundLayout>
       <div className="flex flex-col h-full">
@@ -16,6 +20,7 @@ function FeaturePageLayout(): JSX.Element {
             borderColor: "#ACACE6",
             boxShadow:
               "0 4px 16px rgba(0, 0, 0, 0.15), 0 0 20px rgba(255, 255, 255, 0.05) inset",
+            transform: isMacOS ? 'translateX(32px)' : 'none'
           }}
         >
           <div className="no-drag">
