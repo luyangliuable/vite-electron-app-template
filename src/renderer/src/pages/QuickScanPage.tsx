@@ -615,11 +615,16 @@ function QuickScanPage(): JSX.Element {
                   <div className="flex items-start justify-between">
                     <span className="text-white/70 text-sm">Barriers:</span>
                     <div className="flex flex-col items-end gap-1">
-                      {skinBarriers.map((barrier, index) => (
-                        <span key={barrier.id} className="text-white text-xs">
-                          {barrier.level} {barrier.option}
-                        </span>
-                      ))}
+                      <table className="barriers-table">
+                        <tbody>
+                          {skinBarriers.map((barrier, index) => (
+                            <tr key={barrier.id}>
+                              <td className="barriers-label">{barrier.level}</td>
+                              <td className="barriers-value">{barrier.option}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
@@ -648,11 +653,16 @@ function QuickScanPage(): JSX.Element {
                   <div className="flex items-start justify-between">
                     <span className="text-white/70 text-sm">Barriers:</span>
                     <div className="flex flex-col items-end gap-1">
-                      {skinBarriers.map((barrier, index) => (
-                        <span key={barrier.id} className="text-white text-xs">
-                          {barrier.level} {barrier.option}
-                        </span>
-                      ))}
+                      <table className="barriers-table">
+                        <tbody>
+                          {skinBarriers.map((barrier, index) => (
+                            <tr key={barrier.id}>
+                              <td className="barriers-label">{barrier.level}</td>
+                              <td className="barriers-value">{barrier.option}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
@@ -698,7 +708,7 @@ function QuickScanPage(): JSX.Element {
                       key={barrier.id}
                       className="p-4 rounded-lg bg-white/10 border border-white/20 flex-shrink-0"
                     >
-                      <div className="flex items-end gap-4">
+                      <div className="flex items-end gap-2">
                         <div className="flex-1 min-w-0">
                           <label className="block text-white/80 text-sm font-medium mb-2">
                             Barrier Type
@@ -1129,16 +1139,17 @@ function QuickScanPage(): JSX.Element {
                       <div className="text-yellow-400 text-sm font-medium mb-2">
                         Active Skin Barriers:
                       </div>
-                      <div className="space-y-1">
-                        {skinBarriers.map((barrier, index) => (
-                          <div
-                            key={barrier.id}
-                            className="text-yellow-300/80 text-sm"
-                          >
-                            {index + 1}. {barrier.level} {barrier.option}
-                          </div>
-                        ))}
-                      </div>
+                      <table className="barriers-table">
+                        <tbody>
+                          {skinBarriers.map((barrier, index) => (
+                            <tr key={barrier.id}>
+                              <td className="barriers-label text-yellow-300/80">{index + 1}.</td>
+                              <td className="barriers-label text-yellow-300/80">{barrier.level}</td>
+                              <td className="barriers-value text-yellow-300/80">{barrier.option}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
 

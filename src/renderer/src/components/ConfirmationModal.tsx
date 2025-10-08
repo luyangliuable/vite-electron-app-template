@@ -113,7 +113,7 @@ function ConfirmationModal({
         backdropFilter: "blur(8px)",
       }}
     >
-      <GlassCard padding="lg">
+      <div className="p-6">
           <div className="flex items-start gap-4 mb-6">
             <div className="flex-shrink-0 mt-1">{getIcon()}</div>
             <div className="flex-1">
@@ -138,7 +138,7 @@ function ConfirmationModal({
               {loading ? "Processing..." : confirmText}
             </GlassButton>
           </div>
-        </GlassCard>
+        </div>
     </Modal>
   );
 }

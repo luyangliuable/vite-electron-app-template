@@ -278,6 +278,24 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   color: rgba(0, 0, 0, 0.85);
 }
 
+/* Barriers table borders */
+.barriers-table tr:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.light-theme .barriers-table tr:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Fix barriers form Select text alignment */
+.quick-scan-container .ant-select .ant-select-selector .ant-select-selection-item {
+  text-align: left !important;
+}
+
+.quick-scan-container .ant-select .ant-select-selector {
+  text-align: left !important;
+}
+
 /* Remove top padding from first section since no header above */
 .quick-scan-container .snap-section:first-of-type {
   padding-top: 2rem !important; /* Back to normal padding */
@@ -368,6 +386,7 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   scrollbar-width: thin;
   scrollbar-color: rgba(140, 125, 209, 0.6) rgba(255, 255, 255, 0.1);
   overflow-y: scroll !important; /* Force scrollbar to always show when content overflows */
+  scrollbar-gutter: stable; /* Prevent layout shift and always reserve scrollbar space */
 }
 
 .skin-barriers-scroll::-webkit-scrollbar {
