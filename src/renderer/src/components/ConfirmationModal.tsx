@@ -102,16 +102,19 @@ function ConfirmationModal({
   return (
     <Modal
       open={open}
-      onCancel={onCancel}
+      onCancel={loading ? undefined : onCancel}
       footer={null}
       centered
       width={480}
+      maskClosable={!loading}
+      closable={!loading}
       maskStyle={{
         backgroundColor: "rgba(0, 0, 0, 0.7)",
         backdropFilter: "blur(8px)",
       }}
       modalRender={() => (
-        <GlassCard padding="lg">
+        <div onClick={(e) => e.stopPropagation()}>
+          <GlassCard padding="lg">
           <div className="flex items-start gap-4 mb-6">
             <div className="flex-shrink-0 mt-1">{getIcon()}</div>
             <div className="flex-1">
@@ -137,6 +140,7 @@ function ConfirmationModal({
             </GlassButton>
           </div>
         </GlassCard>
+        </div>
       )}
     />
   );
