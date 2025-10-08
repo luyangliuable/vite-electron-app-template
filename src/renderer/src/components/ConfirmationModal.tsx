@@ -84,14 +84,20 @@ function ConfirmationModal({
   };
 
   const handleConfirmClick = async (e: React.MouseEvent) => {
+    console.log('Delete button clicked!', { loading, event: e });
     e.preventDefault();
     e.stopPropagation();
     
-    if (loading) return;
+    if (loading) {
+      console.log('Already loading, ignoring click');
+      return;
+    }
     
     try {
+      console.log('Starting delete operation...');
       setInternalLoading(true);
       await onConfirm();
+      console.log('Delete operation completed');
     } catch (error) {
       console.error('Error in confirm action:', error);
     } finally {
