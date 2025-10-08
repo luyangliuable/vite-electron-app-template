@@ -112,7 +112,7 @@ function HomePage(): JSX.Element {
             }}
           >
             <p className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? 'text-white/90' : 'text-slate-600'}`}>
-              AI-powered cardiac screening platform revolutionizing point-of-care diagnostics. Empowering healthcare providers with instant, accurate heart murmur detection for better patient outcomes.
+              Advanced cardiac screening platform for healthcare professionals. Streamlining heart sound analysis with intelligent detection technology and comprehensive patient recording management.
             </p>
           </div>
         </div>
