@@ -58,12 +58,7 @@ function GlassButton({
         ${className}
         flex items-center justify-center gap-2
       `}
-      onClick={(e) => {
-        console.log('GlassButton clicked', { disabled, onClick: !!onClick });
-        if (onClick && !disabled) {
-          onClick();
-        }
-      }}
+      onClick={onClick}
       disabled={disabled}
       style={{
         background: variantStyles[variant].background,

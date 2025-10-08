@@ -83,21 +83,15 @@ function ConfirmationModal({
     }
   };
 
-  const handleConfirmClick = async (e: React.MouseEvent) => {
-    console.log('Delete button clicked!', { loading, event: e });
-    e.preventDefault();
-    e.stopPropagation();
+  const handleConfirmClick = async (e?: React.MouseEvent) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     
-    if (loading) {
-      console.log('Already loading, ignoring click');
-      return;
-    }
+    if (loading) return;
     
     try {
-      console.log('Starting delete operation...');
       setInternalLoading(true);
       await onConfirm();
-      console.log('Delete operation completed');
     } catch (error) {
       console.error('Error in confirm action:', error);
     } finally {
@@ -108,19 +102,18 @@ function ConfirmationModal({
   return (
     <Modal
       open={open}
-      onCancel={loading ? undefined : onCancel}
+      onCancel={onCancel}
       footer={null}
       centered
       width={480}
-      maskClosable={!loading}
-      closable={!loading}
+      maskClosable={false}
+      closable={true}
       maskStyle={{
         backgroundColor: "rgba(0, 0, 0, 0.7)",
         backdropFilter: "blur(8px)",
       }}
-      modalRender={() => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <GlassCard padding="lg">
+    >
+      <GlassCard padding="lg">
           <div className="flex items-start gap-4 mb-6">
             <div className="flex-shrink-0 mt-1">{getIcon()}</div>
             <div className="flex-1">
@@ -146,9 +139,7 @@ function ConfirmationModal({
             </GlassButton>
           </div>
         </GlassCard>
-        </div>
-      )}
-    />
+    </Modal>
   );
 }
 
