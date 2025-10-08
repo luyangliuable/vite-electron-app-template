@@ -424,6 +424,49 @@
   color: white !important;
 }
 
+/* Fix dropdown arrow color in dark mode */
+.dark-theme .ant-select-arrow,
+.dark-theme .ant-picker-suffix {
+  color: white !important;
+}
+
+/* Make Sonorus logo visible in dark mode */
+.dark-theme .sonorus-logo {
+  filter: brightness(0) invert(1);
+}
+
+/* Make chest diagram visible in dark mode */
+.dark-theme .chest-diagram-image {
+  filter: brightness(0) invert(1);
+}
+
+/* Fix RecordingsList filter select components - remove white containers in dark mode */
+.dark-theme .ant-select.recordings-list-status-select,
+.dark-theme .ant-select.recordings-list-heart-area-select,
+.dark-theme .ant-picker.recordings-list-date-picker {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(172, 172, 230, 0.3) !important;
+}
+
+.dark-theme .ant-select.recordings-list-status-select:hover,
+.dark-theme .ant-select.recordings-list-heart-area-select:hover,
+.dark-theme .ant-picker.recordings-list-date-picker:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(140, 125, 209, 0.6) !important;
+}
+
+.dark-theme .ant-select.recordings-list-status-select .ant-select-selector,
+.dark-theme .ant-select.recordings-list-heart-area-select .ant-select-selector {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.dark-theme .ant-select.recordings-list-status-select .ant-select-selection-item,
+.dark-theme .ant-select.recordings-list-heart-area-select .ant-select-selection-item {
+  color: white !important;
+}
+
 /* Apply theme variables to common elements */
 .theme-text {
   color: rgb(var(--text-primary)) !important;

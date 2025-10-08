@@ -435,12 +435,8 @@ function RecordingsList(): JSX.Element {
             <Select
               value={statusFilter}
               onChange={setStatusFilter}
-              className="w-full"
+              className="w-full recordings-list-status-select"
               size="large"
-              style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "none"
-              }}
             >
               <Option value="all">All Statuses</Option>
               <Option value="completed">Completed</Option>
@@ -454,12 +450,8 @@ function RecordingsList(): JSX.Element {
             <Select
               value={heartAreaFilter}
               onChange={setHeartAreaFilter}
-              className="w-full"
+              className="w-full recordings-list-heart-area-select"
               size="large"
-              style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "none"
-              }}
             >
               <Option value="all">All Areas</Option>
               <Option value={HeartLocationEnum.Aortic}>Aortic</Option>
@@ -474,12 +466,8 @@ function RecordingsList(): JSX.Element {
             <RangePicker
               value={dateRange}
               onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
-              className="w-full"
+              className="w-full recordings-list-date-picker"
               size="large"
-              style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "none"
-              }}
             />
           </div>
         </div>

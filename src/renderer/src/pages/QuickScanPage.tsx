@@ -982,8 +982,8 @@ function QuickScanPage(): JSX.Element {
           <div className="flex flex-col items-center mb-8">
             <div className="recording-visualizer mb-6">
               <div
+                className="audio-waveform-container"
                 style={{
-                  border: "1px solid white",
                   minHeight: "180px",
                   width: "520px",
                 }}

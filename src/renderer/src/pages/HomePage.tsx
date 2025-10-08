@@ -53,7 +53,7 @@ function HomePage(): JSX.Element {
               <img
                 src={image}
                 alt="Sonorus Logo"
-                className="h-16 w-auto mx-auto"
+                className="h-16 w-auto mx-auto sonorus-logo"
               />
             </div>
           </div>
@@ -111,23 +111,8 @@ function HomePage(): JSX.Element {
             style={{
             }}
           >
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: "#8C7DD1" }}
-              ></div>
-              <span className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                What we do
-              </span>
-              <div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: "#8C7DD1" }}
-              ></div>
-            </div>
             <p className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? 'text-white/90' : 'text-slate-600'}`}>
-              Rheumatic heart disease is a preventable and manageable disease. It affects 40.5 million people worldwide.
-              We built a low-cost device to capture heart sounds and algorithms to analyse those sounds, Allowing valvular disease to be detected by anyone, anywhere.
-              Sonorus aims to eradicated Rheumatic heart disease.
+              AI-powered cardiac screening platform revolutionizing point-of-care diagnostics. Empowering healthcare providers with instant, accurate heart murmur detection for better patient outcomes.
             </p>
           </div>
         </div>

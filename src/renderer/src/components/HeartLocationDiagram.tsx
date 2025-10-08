@@ -29,6 +29,7 @@ const HeartDiagram: React.FC<HeartDiagramProps> = ({
       <img
         src={image}
         alt="Chest diagram"
+        className="chest-diagram-image"
         style={{ width: "100%", height: "auto" }} // 'auto' maintains aspect ratio
       />
 
