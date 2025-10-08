@@ -58,7 +58,7 @@ function Navbar(): JSX.Element {
   };
 
   return (
-    <nav className="flex items-center justify-center gap-4">
+    <nav className="flex items-center justify-center gap-4 no-drag">
       {navItems.map((item) => (
         <GlassButton
           key={item.key}
@@ -66,7 +66,7 @@ function Navbar(): JSX.Element {
           size="sm"
           icon={item.icon}
           onClick={() => handleNavClick(item.path)}
-          className={`transition-all duration-300 ${
+          className={`no-drag transition-all duration-300 ${
             isActive(item.path) ? "opacity-100" : "opacity-80 hover:opacity-100"
           }`}
         >

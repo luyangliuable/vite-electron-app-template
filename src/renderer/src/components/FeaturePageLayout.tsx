@@ -11,14 +11,16 @@ function FeaturePageLayout(): JSX.Element {
       <div className="flex flex-col h-full">
         {/* Header */}
         <div
-          className="w-[90%] mx-auto mt-4 mb-4 rounded-xl flex items-center gap-8 py-2 px-4 bg-white/15 backdrop-blur-xl border z-30"
+          className="w-[90%] mx-auto mt-4 mb-4 rounded-xl flex items-center gap-8 py-2 px-4 bg-white/15 backdrop-blur-xl border z-30 no-drag"
           style={{
             borderColor: "#ACACE6",
             boxShadow:
               "0 4px 16px rgba(0, 0, 0, 0.15), 0 0 20px rgba(255, 255, 255, 0.05) inset",
           }}
         >
-          <BackButton />
+          <div className="no-drag">
+            <BackButton />
+          </div>
           <div className="text-center">
             <div className="flex items-center justify-center">
               <div
@@ -33,7 +35,7 @@ function FeaturePageLayout(): JSX.Element {
               </div>
             </div>
           </div>
-          <div className=" ml-auto">
+          <div className="ml-auto no-drag">
             <Navbar />
           </div>
 
