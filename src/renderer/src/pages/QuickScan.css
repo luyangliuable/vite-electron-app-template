@@ -48,42 +48,57 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   transform: translateX(calc(-50% + var(--macos-traffic-light-offset))) !important;
 }
 
-/* Fixed Patient Information Panel - Right Side */
-.patient-info-section {
+/* Side Panel Container - Prevents Overlapping */
+.side-panels-container {
   position: fixed !important;
-  top: 5rem !important; /* Position below navbar */
-  right: 1rem !important; /* Right side with margin */
-  width: 220px !important; /* Thin fixed width */
-  height: auto !important; /* Content-based height */
-  transform: none !important; /* Remove center transform */
-  z-index: 999 !important; /* Below navbar but above content */
-  margin: 0 !important;
-  padding: 0 !important;
+  top: 5rem !important;
+  right: 1rem !important;
+  width: 220px !important;
+  z-index: 999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  pointer-events: none !important; /* Allow clicks through container */
 }
 
-/* Recording Context Panel - Below Patient Info */
-.recording-context-panel {
-  position: fixed !important;
-  top: calc(5rem + 200px + 0.5rem) !important; /* Below patient panel with smaller gap */
-  right: 1rem !important; /* Align with patient panel */
-  width: 220px !important; /* Same width as patient panel */
+/* Individual panels within container */
+.patient-info-section {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  width: 100% !important;
   height: auto !important;
   transform: none !important;
-  z-index: 998 !important; /* Below patient panel but above content */
+  z-index: auto !important;
   margin: 0 !important;
   padding: 0 !important;
+  pointer-events: auto !important; /* Re-enable clicks on actual panels */
 }
 
-/* Recording Context Panel for Anonymous Sessions */
-.recording-context-panel--anonymous {
-  position: fixed !important;
-  right: 1rem !important;
-  top: 5rem !important; /* Below navbar for anonymous sessions */
-  width: 220px !important;
+.recording-context-panel {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  width: 100% !important;
   height: auto !important;
-  z-index: 998 !important;
+  transform: none !important;
+  z-index: auto !important;
   margin: 0 !important;
   padding: 0 !important;
+  pointer-events: auto !important;
+}
+
+/* Anonymous sessions - use same container approach */
+.recording-context-panel--anonymous {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  z-index: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: auto !important;
 }
 
 /* Reduce shadows and improve transparency for side panels */
@@ -106,11 +121,15 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; /* Minimal shadow */
 }
 
-/* Dark mode form improvements - more specific selectors */
+/* Dark mode form improvements - glassmorphism */
 .dark-theme .ant-modal .ant-modal-content {
-  background: rgba(30, 30, 40, 0.95) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(172, 172, 230, 0.2) !important;
+  background: rgba(30, 30, 40, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  border: none !important; /* Remove default border to prevent double border */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+              0 0 40px rgba(172, 172, 230, 0.1) inset,
+              0 2px 16px rgba(140, 125, 209, 0.2),
+              0 0 0 1px rgba(172, 172, 230, 0.3) !important; /* Use box-shadow for border */
 }
 
 .dark-theme .ant-modal .ant-form-item-label > label {
@@ -147,11 +166,15 @@ body:has(.quick-scan-container) .flex.flex-col.h-full > div:first-child {
   color: white !important;
 }
 
-/* Light mode form styling */
+/* Light mode form styling - glassmorphism */
 .light-theme .ant-modal .ant-modal-content {
-  background: rgba(248, 250, 252, 0.95) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(172, 172, 230, 0.3) !important;
+  background: rgba(248, 250, 252, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  border: none !important; /* Remove default border to prevent double border */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+              0 0 40px rgba(255, 255, 255, 0.3) inset,
+              0 2px 16px rgba(140, 125, 209, 0.15),
+              0 0 0 1px rgba(172, 172, 230, 0.4) !important; /* Use box-shadow for border */
 }
 
 .light-theme .ant-modal .ant-input {

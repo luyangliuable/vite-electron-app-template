@@ -536,128 +536,131 @@ function QuickScanPage(): JSX.Element {
 
   return (
     <div className="quick-scan-container">
-      {/* Patient Information Panel - Right Side Thin Layout */}
-      {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (
-        <section className="patient-info-section">
-          <GlassCard padding="sm" className="w-full">
-            <div className="flex flex-col items-center text-center space-y-3">
-              {/* Avatar */}
-              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                {selectedPatient.name.charAt(0).toUpperCase()}
-              </div>
+      {/* Side Panels Container - Prevents Overlapping */}
+      <div className="side-panels-container">
+        {/* Patient Information Panel - Right Side Thin Layout */}
+        {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (
+          <section className="patient-info-section">
+            <GlassCard padding="sm" className="w-full">
+              <div className="flex flex-col items-center text-center space-y-3">
+                {/* Avatar */}
+                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {selectedPatient.name.charAt(0).toUpperCase()}
+                </div>
 
-              {/* Patient Name */}
-              <div className="px-2">
-                <h3 className="text-white text-xl font-semibold leading-tight break-words">
-                  {selectedPatient.name}
-                </h3>
-              </div>
+                {/* Patient Name */}
+                <div className="px-2">
+                  <h3 className="text-white text-xl font-semibold leading-tight break-words">
+                    {selectedPatient.name}
+                  </h3>
+                </div>
 
-              {/* Patient Details Table */}
-              <div className="w-full px-2">
-                <table className="patient-details-table">
-                  <tbody>
-                    <tr>
-                      <td className="label">ID:</td>
-                      <td className="value">{selectedPatient.patient_uid}</td>
-                    </tr>
-                    <tr>
-                      <td className="label">DOB:</td>
-                      <td className="value">{new Date(selectedPatient.dob).toLocaleDateString()}</td>
-                    </tr>
-                    {selectedPatient.patient_details.conditions && selectedPatient.patient_details.conditions.length > 0 && (
+                {/* Patient Details Table */}
+                <div className="w-full px-2">
+                  <table className="patient-details-table">
+                    <tbody>
                       <tr>
-                        <td className="label">Conditions:</td>
-                        <td className="value">{selectedPatient.patient_details.conditions.join(", ")}</td>
+                        <td className="label">ID:</td>
+                        <td className="value">{selectedPatient.patient_uid}</td>
                       </tr>
-                    )}
-                    {selectedPatient.patient_details.medications && selectedPatient.patient_details.medications.length > 0 && (
                       <tr>
-                        <td className="label">Medications:</td>
-                        <td className="value">{selectedPatient.patient_details.medications.join(", ")}</td>
+                        <td className="label">DOB:</td>
+                        <td className="value">{new Date(selectedPatient.dob).toLocaleDateString()}</td>
                       </tr>
-                    )}
-                    <tr>
-                      <td className="label">Height:</td>
-                      <td className="value">{selectedPatient.patient_details.height > 0 ? `${selectedPatient.patient_details.height}cm` : 'N/A'}</td>
-                    </tr>
-                    <tr>
-                      <td className="label">Weight:</td>
-                      <td className="value">{selectedPatient.patient_details.weight > 0 ? `${selectedPatient.patient_details.weight}kg` : 'N/A'}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                      {selectedPatient.patient_details.conditions && selectedPatient.patient_details.conditions.length > 0 && (
+                        <tr>
+                          <td className="label">Conditions:</td>
+                          <td className="value">{selectedPatient.patient_details.conditions.join(", ")}</td>
+                        </tr>
+                      )}
+                      {selectedPatient.patient_details.medications && selectedPatient.patient_details.medications.length > 0 && (
+                        <tr>
+                          <td className="label">Medications:</td>
+                          <td className="value">{selectedPatient.patient_details.medications.join(", ")}</td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td className="label">Height:</td>
+                        <td className="value">{selectedPatient.patient_details.height > 0 ? `${selectedPatient.patient_details.height}cm` : 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td className="label">Weight:</td>
+                        <td className="value">{selectedPatient.patient_details.weight > 0 ? `${selectedPatient.patient_details.weight}kg` : 'N/A'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </GlassCard>
-        </section>
-      )}
+            </GlassCard>
+          </section>
+        )}
 
-      {/* Recording Context Panel */}
-      {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (isValidHeartLocation(selectedHeartArea) || skinBarriers.length > 0) && (
-        <section className="recording-context-panel">
-          <GlassCard padding="sm" className="w-full">
-            <div className="flex flex-col gap-1">
-              {isValidHeartLocation(selectedHeartArea) && (
-                <div className="flex items-center justify-between">
-                  <span className="text-white/70 text-sm">Recording:</span>
-                  <div className="flex flex-col items-end">
-                    <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
-                    {completedRecordings[selectedHeartArea] && (
-                      <span className="text-green-400 text-xs">✓ Completed</span>
-                    )}
+        {/* Recording Context Panel */}
+        {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (isValidHeartLocation(selectedHeartArea) || skinBarriers.length > 0) && (
+          <section className="recording-context-panel">
+            <GlassCard padding="sm" className="w-full">
+              <div className="flex flex-col gap-1">
+                {isValidHeartLocation(selectedHeartArea) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/70 text-sm">Recording:</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                      {completedRecordings[selectedHeartArea] && (
+                        <span className="text-green-400 text-xs">✓ Completed</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-              {skinBarriers.length > 0 && (
-                <div className="flex items-start justify-between">
-                  <span className="text-white/70 text-sm">Barriers:</span>
-                  <div className="flex flex-col items-end gap-1">
-                    {skinBarriers.map((barrier, index) => (
-                      <span key={barrier.id} className="text-white text-xs">
-                        {barrier.level} {barrier.option}
-                      </span>
-                    ))}
+                )}
+                {skinBarriers.length > 0 && (
+                  <div className="flex items-start justify-between">
+                    <span className="text-white/70 text-sm">Barriers:</span>
+                    <div className="flex flex-col items-end gap-1">
+                      {skinBarriers.map((barrier, index) => (
+                        <span key={barrier.id} className="text-white text-xs">
+                          {barrier.level} {barrier.option}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </GlassCard>
-        </section>
-      )}
+                )}
+              </div>
+            </GlassCard>
+          </section>
+        )}
 
-      {/* Recording Context Panel for Quick Scan Sessions */}
-      {(!selectedPatient || selectedPatient.name === "Quick Scan Session") && (isValidHeartLocation(selectedHeartArea) || skinBarriers.length > 0) && (
-        <section className="recording-context-panel--anonymous">
-          <GlassCard padding="sm" className="w-full">
-            <div className="flex flex-col gap-1">
-              {isValidHeartLocation(selectedHeartArea) && (
-                <div className="flex items-center justify-between">
-                  <span className="text-white/70 text-sm">Recording:</span>
-                  <div className="flex flex-col items-end">
-                    <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
-                    {completedRecordings[selectedHeartArea] && (
-                      <span className="text-green-400 text-xs">✓ Completed</span>
-                    )}
+        {/* Recording Context Panel for Quick Scan Sessions */}
+        {(!selectedPatient || selectedPatient.name === "Quick Scan Session") && (isValidHeartLocation(selectedHeartArea) || skinBarriers.length > 0) && (
+          <section className="recording-context-panel--anonymous">
+            <GlassCard padding="sm" className="w-full">
+              <div className="flex flex-col gap-1">
+                {isValidHeartLocation(selectedHeartArea) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/70 text-sm">Recording:</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                      {completedRecordings[selectedHeartArea] && (
+                        <span className="text-green-400 text-xs">✓ Completed</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-              {skinBarriers.length > 0 && (
-                <div className="flex items-start justify-between">
-                  <span className="text-white/70 text-sm">Barriers:</span>
-                  <div className="flex flex-col items-end gap-1">
-                    {skinBarriers.map((barrier, index) => (
-                      <span key={barrier.id} className="text-white text-xs">
-                        {barrier.level} {barrier.option}
-                      </span>
-                    ))}
+                )}
+                {skinBarriers.length > 0 && (
+                  <div className="flex items-start justify-between">
+                    <span className="text-white/70 text-sm">Barriers:</span>
+                    <div className="flex flex-col items-end gap-1">
+                      {skinBarriers.map((barrier, index) => (
+                        <span key={barrier.id} className="text-white text-xs">
+                          {barrier.level} {barrier.option}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </GlassCard>
-        </section>
-      )}
+                )}
+              </div>
+            </GlassCard>
+          </section>
+        )}
+      </div>
 
       {/* Section 1: Skin Barriers Configuration */}
       <section id="section-0" className="snap-section section-1">
