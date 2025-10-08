@@ -660,6 +660,28 @@ div.ant-modal-content {
   }
 }
 
+/* Heart beating animation for recording indicator */
+@keyframes heartbeat {
+  0%, 100% { 
+    transform: scale(1);
+    color: #ef4444;
+  }
+  50% { 
+    transform: scale(1.2);
+    color: #dc2626;
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1s ease-in-out infinite;
+}
+
+/* Lock scroll during recording */
+.quick-scan-container.recording-active {
+  scroll-snap-type: none !important;
+  overflow-y: hidden !important;
+}
+
 .result-item {
   padding: 1rem 0;
   border-bottom: 1px solid rgba(172, 172, 230, 0.2);

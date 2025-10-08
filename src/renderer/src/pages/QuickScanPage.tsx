@@ -535,7 +535,7 @@ function QuickScanPage(): JSX.Element {
   const isResumedSession = location.state?.resumeBatch ? true : false;
 
   return (
-    <div className="quick-scan-container">
+    <div className={`quick-scan-container ${isRecording ? 'recording-active' : ''}`}>
       {/* Side Panels Container - Prevents Overlapping */}
       <div className="side-panels-container">
         {/* Patient Information Panel - Right Side Thin Layout */}
@@ -604,7 +604,12 @@ function QuickScanPage(): JSX.Element {
                   <div className="flex items-center justify-between">
                     <span className="text-white/70 text-sm">Recording:</span>
                     <div className="flex flex-col items-end">
-                      <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                      <div className="flex items-center gap-2">
+                        {isRecording && (
+                          <HeartOutlined className="animate-heartbeat" />
+                        )}
+                        <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                      </div>
                       {completedRecordings[selectedHeartArea] && (
                         <span className="text-green-400 text-xs">✓ Completed</span>
                       )}
@@ -642,7 +647,12 @@ function QuickScanPage(): JSX.Element {
                   <div className="flex items-center justify-between">
                     <span className="text-white/70 text-sm">Recording:</span>
                     <div className="flex flex-col items-end">
-                      <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                      <div className="flex items-center gap-2">
+                        {isRecording && (
+                          <HeartOutlined className="animate-heartbeat" />
+                        )}
+                        <span className="text-white text-sm">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                      </div>
                       {completedRecordings[selectedHeartArea] && (
                         <span className="text-green-400 text-xs">✓ Completed</span>
                       )}
