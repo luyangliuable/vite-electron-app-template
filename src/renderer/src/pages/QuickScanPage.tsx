@@ -108,6 +108,7 @@ function QuickScanPage(): JSX.Element {
   >({});
   const [skinBarriers, setSkinBarriers] = useState<LocalSkinBarrier[]>([]);
   const [currentSection, setCurrentSection] = useState(0);
+  const [hasUserStartedRecording, setHasUserStartedRecording] = useState(false);
   const {
     isRecording,
     recordingTime,
@@ -119,27 +120,23 @@ function QuickScanPage(): JSX.Element {
     clearError,
   } = useAudioRecording(30000); // 30 second max
 
-  // Create or resume recording batch on component mount
+  // Handle navigation state and resume existing batches only
   useEffect(() => {
-    if (!currentRecordingBatch) {
-      const patientFromNav = location.state?.patient as Patient | undefined;
-      const resumeBatch = location.state?.resumeBatch as
-        | RecordingBatch
-        | undefined;
+    const patientFromNav = location.state?.patient as Patient | undefined;
+    const resumeBatch = location.state?.resumeBatch as
+      | RecordingBatch
+      | undefined;
 
-      if (resumeBatch && patientFromNav) {
-        // Resume existing batch
-        setSelectedPatient(patientFromNav);
-        resumeExistingBatch(resumeBatch);
-      } else if (patientFromNav) {
-        // Create new batch for patient
-        setSelectedPatient(patientFromNav);
-        createPatientRecordingBatch(patientFromNav);
-      } else {
-        // Create anonymous batch
-        createAnonymousRecordingBatch();
-      }
+    if (resumeBatch && patientFromNav) {
+      // Resume existing batch
+      setSelectedPatient(patientFromNav);
+      resumeExistingBatch(resumeBatch);
+      setHasUserStartedRecording(true); // User has already started recording in resumed batch
+    } else if (patientFromNav) {
+      // Set patient but don't create batch yet - wait for user to start recording
+      setSelectedPatient(patientFromNav);
     }
+    // For anonymous sessions, don't create batch until user attempts recording
   }, [location.state]);
 
   const createPatientRecordingBatch = async (patient: Patient) => {
@@ -274,6 +271,18 @@ function QuickScanPage(): JSX.Element {
     }
 
     try {
+      // Create recording batch on first recording attempt if it doesn't exist
+      if (!currentRecordingBatch) {
+        if (selectedPatient && selectedPatient.name !== "Quick Scan Session") {
+          // Create batch for selected patient
+          await createPatientRecordingBatch(selectedPatient);
+        } else {
+          // Create anonymous batch
+          await createAnonymousRecordingBatch();
+        }
+        setHasUserStartedRecording(true);
+      }
+
       clearError();
       await startAudioRecording();
     } catch (error) {
@@ -429,11 +438,19 @@ function QuickScanPage(): JSX.Element {
     console.log("performComprehensiveAnalysis called:", {
       currentRecordingBatch: !!currentRecordingBatch,
       selectedPatient: !!selectedPatient,
-      batchPatient: !!currentRecordingBatch?.patient
+      batchPatient: !!currentRecordingBatch?.patient,
+      hasRecordings: !!currentRecordingBatch?.recordings?.length
     });
 
     if (!currentRecordingBatch) {
       console.error("Cannot perform analysis: missing batch data");
+      return;
+    }
+
+    // Validate that batch has recordings before proceeding
+    if (!currentRecordingBatch.recordings || currentRecordingBatch.recordings.length === 0) {
+      console.error("Cannot perform analysis: no recordings in batch");
+      alert("No recordings found. Please complete at least one recording before starting analysis.");
       return;
     }
 
@@ -535,13 +552,16 @@ function QuickScanPage(): JSX.Element {
   };
 
   const handleReset = (): void => {
+    // Preserve patient information for reuse if they had started recording
+    const currentPatient = selectedPatient;
+    const hadStartedRecording = hasUserStartedRecording;
+    
     setCurrentStep(WorkflowSteps.SelectPatient);
     setAnalysisComplete(false);
     setAnalysisProcessing(false);
     setAnalysisResults(null);
     setSelectedHeartArea("");
     setCurrentRecordingBatch(null);
-    setSelectedPatient(null);
     setCompletedRecordings({
       [HeartLocationEnum.Aortic]: false,
       [HeartLocationEnum.Pulmonary]: false,
@@ -550,12 +570,26 @@ function QuickScanPage(): JSX.Element {
     });
     setRecordingResults({});
     setSkinBarriers([]);
+    setHasUserStartedRecording(false);
     
     // Scroll back to the beginning (Skin Barriers section)
     scrollToSection(0);
     
-    // Create new anonymous batch for next session
-    createAnonymousRecordingBatch();
+    // Only create new batch if user had actually started recording before
+    if (hadStartedRecording) {
+      if (currentPatient && currentPatient.name !== "Quick Scan Session") {
+        // Preserve real patient and keep them selected for next session
+        setSelectedPatient(currentPatient);
+        // Don't create batch yet - wait for user to start recording again
+      } else {
+        // Clear patient for anonymous sessions
+        setSelectedPatient(null);
+        // Don't create anonymous batch yet - wait for user to start recording
+      }
+    } else {
+      // User never recorded anything, just clear everything
+      setSelectedPatient(null);
+    }
   };
 
   const canStartRecording = selectedHeartArea;
@@ -1340,7 +1374,10 @@ function QuickScanPage(): JSX.Element {
             )}
 
             {Object.values(completedRecordings).filter(Boolean).length === 4 &&
-              !analysisComplete && (
+              !analysisComplete && 
+              currentRecordingBatch && 
+              currentRecordingBatch.recordings && 
+              currentRecordingBatch.recordings.length > 0 && (
                 <div className="mb-2">
                   <p className="text-green-400 text-base mb-2">
                     ✓ All 4 areas recorded!
