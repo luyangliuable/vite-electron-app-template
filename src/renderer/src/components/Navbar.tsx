@@ -4,7 +4,7 @@ import {
   HomeOutlined,
   TeamOutlined,
   UnorderedListOutlined,
-  SettingOutlined
+  SettingOutlined,
 } from "@ant-design/icons";
 import GlassButton from "./GlassButton";
 
@@ -20,26 +20,26 @@ const navItems: NavItem[] = [
     key: "overview",
     label: "Overview",
     icon: <HomeOutlined />,
-    path: "/"
+    path: "/",
   },
   {
     key: "patients",
     label: "Patients",
     icon: <TeamOutlined />,
-    path: "/patients"
+    path: "/patients",
   },
   {
     key: "recordings",
     label: "Recordings",
     icon: <UnorderedListOutlined />,
-    path: "/recordings"
+    path: "/recordings",
   },
   {
     key: "settings",
     label: "Settings",
     icon: <SettingOutlined />,
-    path: "/settings"
-  }
+    path: "/settings",
+  },
 ];
 
 function Navbar(): JSX.Element {

@@ -5,7 +5,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   ReloadOutlined,
-  HeartOutlined
+  HeartOutlined,
 } from "@ant-design/icons";
 import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
@@ -31,15 +31,15 @@ function PairDevice(): JSX.Element {
       name: "Sonorus Stethoscope SN-001",
       status: "disconnected",
       batteryLevel: 85,
-      signalStrength: 95
+      signalStrength: 95,
     },
     {
       id: "steth-002",
       name: "Sonorus Stethoscope SN-002",
       status: "disconnected",
       batteryLevel: 42,
-      signalStrength: 78
-    }
+      signalStrength: 78,
+    },
   ];
 
   useEffect(() => {
@@ -64,20 +64,20 @@ function PairDevice(): JSX.Element {
     setConnectionProgress(0);
     const updatedDevice = { ...device, status: "connecting" as const };
 
-    setDevices(prev => prev.map(d =>
-      d.id === device.id ? updatedDevice : d
-    ));
+    setDevices((prev) =>
+      prev.map((d) => (d.id === device.id ? updatedDevice : d)),
+    );
 
     const interval = setInterval(() => {
-      setConnectionProgress(prev => {
+      setConnectionProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           const connectedDev = { ...device, status: "connected" as const };
           setConnectedDevice(connectedDev);
           localStorage.setItem("connectedDevice", JSON.stringify(connectedDev));
-          setDevices(prev => prev.map(d =>
-            d.id === device.id ? connectedDev : d
-          ));
+          setDevices((prev) =>
+            prev.map((d) => (d.id === device.id ? connectedDev : d)),
+          );
           return 100;
         }
         return prev + 10;
@@ -88,9 +88,13 @@ function PairDevice(): JSX.Element {
   const disconnectDevice = () => {
     setConnectedDevice(null);
     localStorage.removeItem("connectedDevice");
-    setDevices(prev => prev.map(d =>
-      d.status === "connected" ? { ...d, status: "disconnected" as const } : d
-    ));
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.status === "connected"
+          ? { ...d, status: "disconnected" as const }
+          : d,
+      ),
+    );
   };
 
   const getSignalIcon = (strength: number) => {
@@ -109,7 +113,7 @@ function PairDevice(): JSX.Element {
   return (
     <div className="pair-device-container max-w-4xl mx-auto">
       <div className="mb-6">
-        <Title level={2} style={{ color: 'white', margin: 0 }}>
+        <Title level={2} style={{ color: "white", margin: 0 }}>
           Device Connection
         </Title>
         <p className="text-white/70 text-lg mt-2">
@@ -139,7 +143,7 @@ function PairDevice(): JSX.Element {
                 style={{
                   background: "rgba(16, 185, 129, 0.1)",
                   borderColor: "#10b981",
-                  color: "#10b981"
+                  color: "#10b981",
                 }}
               />
             ) : (
@@ -153,7 +157,7 @@ function PairDevice(): JSX.Element {
                 style={{
                   background: "rgba(245, 158, 11, 0.1)",
                   borderColor: "#f59e0b",
-                  color: "#f59e0b"
+                  color: "#f59e0b",
                 }}
               />
             )}
@@ -166,19 +170,27 @@ function PairDevice(): JSX.Element {
                     <Progress
                       percent={connectedDevice.batteryLevel}
                       size="small"
-                      strokeColor={getBatteryColor(connectedDevice.batteryLevel)}
+                      strokeColor={getBatteryColor(
+                        connectedDevice.batteryLevel,
+                      )}
                       showInfo={false}
                       className="w-16"
                     />
-                    <span className="text-white text-sm">{connectedDevice.batteryLevel}%</span>
+                    <span className="text-white text-sm">
+                      {connectedDevice.batteryLevel}%
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg">
                   <span className="text-white/70">Signal</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{getSignalIcon(connectedDevice.signalStrength)}</span>
-                    <span className="text-white text-sm">{connectedDevice.signalStrength}%</span>
+                    <span className="text-lg">
+                      {getSignalIcon(connectedDevice.signalStrength)}
+                    </span>
+                    <span className="text-white text-sm">
+                      {connectedDevice.signalStrength}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -216,7 +228,9 @@ function PairDevice(): JSX.Element {
         <GlassCard padding="lg">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-white">Available Devices</h3>
+              <h3 className="text-xl font-semibold text-white">
+                Available Devices
+              </h3>
               {devices.length > 0 && !isScanning && (
                 <GlassButton
                   variant="secondary"
@@ -232,9 +246,7 @@ function PairDevice(): JSX.Element {
             {isScanning && (
               <div className="text-center py-8">
                 <div className="mb-4">
-                  <WifiOutlined
-                    className="text-4xl text-white/60 animate-pulse"
-                  />
+                  <WifiOutlined className="text-4xl text-white/60 animate-pulse" />
                 </div>
                 <p className="text-white/70">Scanning for devices...</p>
               </div>
@@ -243,7 +255,8 @@ function PairDevice(): JSX.Element {
             {!isScanning && devices.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-white/60">
-                  No devices found. Make sure your stethoscope is powered on and in pairing mode.
+                  No devices found. Make sure your stethoscope is powered on and
+                  in pairing mode.
                 </p>
               </div>
             )}
@@ -256,13 +269,15 @@ function PairDevice(): JSX.Element {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-white font-medium">{device.name}</h4>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      device.status === "connected"
-                        ? "bg-green-500/20 text-green-300"
-                        : device.status === "connecting"
-                        ? "bg-blue-500/20 text-blue-300"
-                        : "bg-gray-500/20 text-gray-300"
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        device.status === "connected"
+                          ? "bg-green-500/20 text-green-300"
+                          : device.status === "connecting"
+                            ? "bg-blue-500/20 text-blue-300"
+                            : "bg-gray-500/20 text-gray-300"
+                      }`}
+                    >
                       {device.status}
                     </span>
                   </div>
@@ -274,7 +289,9 @@ function PairDevice(): JSX.Element {
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-white/60">Signal:</span>
-                      <span className="text-white">{device.signalStrength}%</span>
+                      <span className="text-white">
+                        {device.signalStrength}%
+                      </span>
                     </div>
                   </div>
 
@@ -286,7 +303,9 @@ function PairDevice(): JSX.Element {
                         strokeColor="#8C7DD1"
                         showInfo={false}
                       />
-                      <p className="text-white/60 text-xs mt-1">Connecting...</p>
+                      <p className="text-white/60 text-xs mt-1">
+                        Connecting...
+                      </p>
                     </div>
                   )}
 

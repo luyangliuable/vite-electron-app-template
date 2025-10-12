@@ -1,4 +1,11 @@
-import { Menu, MenuItemConstructorOptions, shell, app, dialog, BrowserWindow } from "electron";
+import {
+  Menu,
+  MenuItemConstructorOptions,
+  shell,
+  app,
+  dialog,
+  BrowserWindow,
+} from "electron";
 import { MenuHandlers } from "./menuHandlers";
 
 export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
@@ -12,7 +19,10 @@ export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
           {
             label: app.getName(),
             submenu: [
-              { label: "About Sonorus", click: () => showAboutDialog(mainWindow) },
+              {
+                label: "About Sonorus",
+                click: () => showAboutDialog(mainWindow),
+              },
               { type: "separator" as const },
               { role: "services" as const },
               { type: "separator" as const },

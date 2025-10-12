@@ -62,11 +62,12 @@ const buildPaths = (samples: number[]) => {
 
   return {
     strokePath: topPath,
-    fillPath: `${topPath}${mirroredBottomPath} Z`
+    fillPath: `${topPath}${mirroredBottomPath} Z`,
   };
 };
 
-const createEmptySamples = (count: number): number[] => new Array(count).fill(0);
+const createEmptySamples = (count: number): number[] =>
+  new Array(count).fill(0);
 
 const TIMELINE_SECONDS = 2;
 const FRAME_RATE_GUESS = 60;
@@ -78,8 +79,13 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
   analyser = null,
   samples = 480,
 }) => {
-  const sampleCount = Math.min(Math.max(samples, MIN_SAMPLE_COUNT), MAX_SAMPLE_COUNT);
-  const [values, setValues] = useState<number[]>(() => createEmptySamples(sampleCount));
+  const sampleCount = Math.min(
+    Math.max(samples, MIN_SAMPLE_COUNT),
+    MAX_SAMPLE_COUNT,
+  );
+  const [values, setValues] = useState<number[]>(() =>
+    createEmptySamples(sampleCount),
+  );
   const animationFrameRef = useRef<number>();
   const rawId = useId();
   const gradientBaseId = useMemo(() => rawId.replace(/:/g, ""), [rawId]);
@@ -130,7 +136,7 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
     const dataArray = new Uint8Array(bufferLength);
     const targetChunkSize = Math.max(
       Math.round(sampleCount / (TIMELINE_SECONDS * FRAME_RATE_GUESS)),
-      1
+      1,
     );
     const chunkSize = Math.min(targetChunkSize, sampleCount);
 
@@ -140,7 +146,11 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
       const step = Math.max(Math.floor(bufferLength / chunkSize), 1);
       const newChunk: number[] = [];
 
-      for (let index = 0; index < bufferLength && newChunk.length < chunkSize; index += step) {
+      for (
+        let index = 0;
+        index < bufferLength && newChunk.length < chunkSize;
+        index += step
+      ) {
         const normalized = dataArray[index] / 128 - 1;
         newChunk.push(clamp(normalized, -1, 1));
       }
@@ -148,7 +158,10 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
       if (newChunk.length > 0) {
         setValues((previous) => {
           if (previous.length !== sampleCount) {
-            return [...createEmptySamples(sampleCount - newChunk.length), ...newChunk];
+            return [
+              ...createEmptySamples(sampleCount - newChunk.length),
+              ...newChunk,
+            ];
           }
 
           const trimmed = previous.slice(newChunk.length);
@@ -167,7 +180,10 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
           const merged = trimmed.concat(smoothedChunk);
 
           if (merged.length < sampleCount) {
-            return [...createEmptySamples(sampleCount - merged.length), ...merged];
+            return [
+              ...createEmptySamples(sampleCount - merged.length),
+              ...merged,
+            ];
           }
 
           return merged.slice(merged.length - sampleCount);
@@ -188,7 +204,9 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const fillGradientId = `${gradientBaseId}-fill`;
 
   return (
-    <div className={`audio-waveform ${isActive ? "audio-waveform--active" : "audio-waveform--inactive"}`}>
+    <div
+      className={`audio-waveform ${isActive ? "audio-waveform--active" : "audio-waveform--inactive"}`}
+    >
       <svg
         className="audio-waveform__svg"
         viewBox="0 0 100 100"
@@ -197,12 +215,24 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
         aria-hidden="true"
       >
         <defs>
-          <linearGradient id={strokeGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient
+            id={strokeGradientId}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
             <stop offset="0%" stopColor="rgba(172, 172, 230, 0.9)" />
             <stop offset="70%" stopColor="rgba(140, 125, 209, 0.95)" />
             <stop offset="100%" stopColor="rgba(132, 112, 210, 0.9)" />
           </linearGradient>
-          <linearGradient id={fillGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient
+            id={fillGradientId}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+          >
             <stop offset="0%" stopColor="rgba(172, 172, 230, 0.28)" />
             <stop offset="60%" stopColor="rgba(140, 125, 209, 0.18)" />
             <stop offset="100%" stopColor="rgba(124, 103, 206, 0.08)" />
@@ -217,7 +247,13 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
           />
         )}
 
-        <line x1="0" y1="50" x2="100" y2="50" className="audio-waveform__baseline" />
+        <line
+          x1="0"
+          y1="50"
+          x2="100"
+          y2="50"
+          className="audio-waveform__baseline"
+        />
 
         {strokePath && (
           <path

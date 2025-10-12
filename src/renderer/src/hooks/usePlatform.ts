@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export interface PlatformInfo {
   isMacOS: boolean;
@@ -12,7 +12,7 @@ export const usePlatform = (): PlatformInfo => {
     isMacOS: false,
     isWindows: false,
     isLinux: false,
-    platform: 'unknown'
+    platform: "unknown",
   });
 
   useEffect(() => {
@@ -20,15 +20,21 @@ export const usePlatform = (): PlatformInfo => {
       const userAgent = navigator.userAgent.toLowerCase();
       const platform = navigator.platform.toLowerCase();
 
-      const isMacOS = userAgent.includes('mac') || platform.includes('mac');
-      const isWindows = userAgent.includes('win') || platform.includes('win');
-      const isLinux = userAgent.includes('linux') || platform.includes('linux');
+      const isMacOS = userAgent.includes("mac") || platform.includes("mac");
+      const isWindows = userAgent.includes("win") || platform.includes("win");
+      const isLinux = userAgent.includes("linux") || platform.includes("linux");
 
       setPlatformInfo({
         isMacOS,
         isWindows,
         isLinux,
-        platform: isMacOS ? 'darwin' : isWindows ? 'win32' : isLinux ? 'linux' : 'unknown'
+        platform: isMacOS
+          ? "darwin"
+          : isWindows
+            ? "win32"
+            : isLinux
+              ? "linux"
+              : "unknown",
       });
     };
 

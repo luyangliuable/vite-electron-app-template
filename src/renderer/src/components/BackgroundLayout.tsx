@@ -17,8 +17,8 @@ function BackgroundLayout({ children }: BackgroundLayoutProps): JSX.Element {
       <div
         className="fixed inset-0 w-screen h-screen z-0"
         style={{
-          backgroundImage: isDarkMode ? `url(${background})` : 'none',
-          backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+          backgroundImage: isDarkMode ? `url(${background})` : "none",
+          backgroundColor: isDarkMode ? "#1a1a1a" : "#ffffff",
           backgroundSize: "cover",
           backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
@@ -35,21 +35,19 @@ function BackgroundLayout({ children }: BackgroundLayoutProps): JSX.Element {
       <div
         className={`fixed inset-0 w-full h-full z-10 ${
           isDarkMode
-            ? 'bg-gradient-to-br from-white/3 via-purple-300/4 to-indigo-200/3'
-            : 'bg-transparent'
+            ? "bg-gradient-to-br from-white/3 via-purple-300/4 to-indigo-200/3"
+            : "bg-transparent"
         }`}
         style={{ margin: 0, padding: 0 }}
       />
 
       {/* macOS Draggable header region */}
-      {isMacOS && (
-        <div className="macos-drag-header" />
-      )}
+      {isMacOS && <div className="macos-drag-header" />}
 
       {/* Content container with platform-specific spacing */}
       <div
         className={`relative z-20 w-full h-full overflow-hidden ${
-          isMacOS ? 'pt-4' : ''
+          isMacOS ? "pt-4" : ""
         }`}
         style={{ margin: 0, padding: 0 }}
       >

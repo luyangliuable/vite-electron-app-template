@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, Progress, Steps, Alert } from "antd";
-import {
-  PlayCircleOutlined,
-  StopOutlined,
-} from "@ant-design/icons";
+import { PlayCircleOutlined, StopOutlined } from "@ant-design/icons";
 import GlassCard from "../components/GlassCard";
 import AudioWaveform from "../components/AudioWaveform";
 import useMicrophoneAnalyser from "../hooks/useMicrophoneAnalyser";

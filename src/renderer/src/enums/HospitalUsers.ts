@@ -1,6 +1,6 @@
 const HospitalUsers = {
-	MONASH: 'Monash',
-	ADMIN: 'Admin'
+  MONASH: "Monash",
+  ADMIN: "Admin",
 };
 
 type HospitalUsers = (typeof HospitalUsers)[keyof typeof HospitalUsers];

@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import useMicrophoneAnalyser from './useMicrophoneAnalyser';
+import React, { useCallback, useRef, useState, useEffect } from "react";
+import useMicrophoneAnalyser from "./useMicrophoneAnalyser";
 
 export interface RecordingData {
   blob: Blob;
@@ -31,10 +31,10 @@ interface UseAudioRecordingResult {
 }
 
 const SUPPORTED_MIME_TYPES = [
-  'audio/webm;codecs=opus',
-  'audio/webm',
-  'audio/mp4',
-  'audio/wav'
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/mp4",
+  "audio/wav",
 ];
 
 const getSupportedMimeType = (): string => {
@@ -44,7 +44,7 @@ const getSupportedMimeType = (): string => {
     }
   }
   // Fallback to default
-  return 'audio/webm';
+  return "audio/webm";
 };
 
 const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
@@ -52,7 +52,9 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [recordingData, setRecordingData] = useState<RecordingData | null>(null);
+  const [recordingData, setRecordingData] = useState<RecordingData | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Use microphone analyser for real-time audio visualization
@@ -61,7 +63,7 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
     start: startMicrophone,
     stop: stopMicrophone,
     error: microphoneError,
-    clearError: clearMicrophoneError
+    clearError: clearMicrophoneError,
   } = useMicrophoneAnalyser();
 
   // Refs for recording
@@ -70,7 +72,9 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
   const chunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const recordingPromiseResolverRef = useRef<((data: RecordingData | null) => void) | null>(null);
+  const recordingPromiseResolverRef = useRef<
+    ((data: RecordingData | null) => void) | null
+  >(null);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -108,8 +112,8 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          sampleRate: 44100
-        }
+          sampleRate: 44100,
+        },
       });
 
       streamRef.current = stream;
@@ -120,7 +124,7 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
       // Create MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        audioBitsPerSecond: 128000
+        audioBitsPerSecond: 128000,
       });
 
       mediaRecorderRef.current = mediaRecorder;
@@ -141,7 +145,7 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
           blob,
           duration,
           size: blob.size,
-          mimeType
+          mimeType,
         };
 
         setRecordingData(data);
@@ -156,8 +160,8 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
       };
 
       mediaRecorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
-        setError('Recording failed. Please try again.');
+        console.error("MediaRecorder error:", event);
+        setError("Recording failed. Please try again.");
 
         // Resolve the promise with null in case of error
         if (recordingPromiseResolverRef.current) {
@@ -177,31 +181,37 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
 
       // Start timer
       updateRecordingTime();
-
     } catch (recordingError) {
-      console.error('Failed to start recording:', recordingError);
+      console.error("Failed to start recording:", recordingError);
 
-      let errorMessage = 'Failed to start recording. ';
+      let errorMessage = "Failed to start recording. ";
 
       if (recordingError instanceof DOMException) {
-        if (recordingError.name === 'NotAllowedError') {
-          errorMessage += 'Please allow microphone access and try again.';
-        } else if (recordingError.name === 'NotFoundError') {
-          errorMessage += 'No microphone found. Please connect a microphone and try again.';
+        if (recordingError.name === "NotAllowedError") {
+          errorMessage += "Please allow microphone access and try again.";
+        } else if (recordingError.name === "NotFoundError") {
+          errorMessage +=
+            "No microphone found. Please connect a microphone and try again.";
         } else {
           errorMessage += recordingError.message;
         }
       } else if (recordingError instanceof Error) {
         errorMessage += recordingError.message;
       } else {
-        errorMessage += 'Unknown error occurred.';
+        errorMessage += "Unknown error occurred.";
       }
 
       setError(errorMessage);
       cleanup();
       throw recordingError;
     }
-  }, [isRecording, startMicrophone, clearError, updateRecordingTime, recordingTime]);
+  }, [
+    isRecording,
+    startMicrophone,
+    clearError,
+    updateRecordingTime,
+    recordingTime,
+  ]);
 
   const stopRecording = useCallback(async (): Promise<RecordingData | null> => {
     if (!isRecording || !mediaRecorderRef.current) {
@@ -215,7 +225,7 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
       });
 
       // Stop the MediaRecorder
-      if (mediaRecorderRef.current.state !== 'inactive') {
+      if (mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
       }
 
@@ -234,10 +244,9 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
       // Wait for the MediaRecorder to complete processing
       const finalRecordingData = await recordingPromise;
       return finalRecordingData;
-
     } catch (stopError) {
-      console.error('Error stopping recording:', stopError);
-      setError('Failed to stop recording properly.');
+      console.error("Error stopping recording:", stopError);
+      setError("Failed to stop recording properly.");
 
       // Clean up the promise resolver
       if (recordingPromiseResolverRef.current) {
@@ -262,10 +271,9 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-
     } catch (pauseError) {
-      console.error('Error pausing recording:', pauseError);
-      setError('Failed to pause recording.');
+      console.error("Error pausing recording:", pauseError);
+      setError("Failed to pause recording.");
     }
   }, [isRecording, isPaused]);
 
@@ -282,10 +290,9 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
 
       // Resume timer
       updateRecordingTime();
-
     } catch (resumeError) {
-      console.error('Error resuming recording:', resumeError);
-      setError('Failed to resume recording.');
+      console.error("Error resuming recording:", resumeError);
+      setError("Failed to resume recording.");
     }
   }, [isRecording, isPaused, recordingTime, updateRecordingTime]);
 
@@ -297,18 +304,21 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
 
   const cleanup = useCallback(() => {
     // Stop MediaRecorder
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       try {
         mediaRecorderRef.current.stop();
       } catch (stopError) {
-        console.warn('Error stopping MediaRecorder during cleanup:', stopError);
+        console.warn("Error stopping MediaRecorder during cleanup:", stopError);
       }
     }
     mediaRecorderRef.current = null;
 
     // Stop stream tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
 
@@ -365,7 +375,7 @@ const useAudioRecording = (maxDuration = 30000): UseAudioRecordingResult => {
 
     // Error handling
     error: error || microphoneError,
-    clearError
+    clearError,
   };
 };
 

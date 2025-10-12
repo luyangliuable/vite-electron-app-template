@@ -42,7 +42,10 @@ export function useMenuActions(handlers?: MenuActionHandler) {
       window.electron.ipcRenderer.on("navigate-to", handleNavigation);
       window.electron.ipcRenderer.on("menu-action", handleMenuAction);
       window.electron.ipcRenderer.on("file-opened", handleFileOpened);
-      window.electron.ipcRenderer.on("export-data-request", handleExportDataRequest);
+      window.electron.ipcRenderer.on(
+        "export-data-request",
+        handleExportDataRequest,
+      );
     }
 
     // Cleanup function

@@ -1,4 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain, safeStorage, Menu, screen } from "electron";
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  safeStorage,
+  Menu,
+  screen,
+} from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
@@ -18,7 +26,7 @@ import { loadFile } from "./system/loadFile";
 function createWindow(): void {
   // Get screen dimensions
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  
+
   // Create the browser window with platform-specific styling
   const mainWindow = new BrowserWindow({
     width: width,
@@ -41,7 +49,7 @@ function createWindow(): void {
 
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
-    
+
     // Set up native menu system
     const menu = createApplicationMenu(mainWindow);
     Menu.setApplicationMenu(menu);

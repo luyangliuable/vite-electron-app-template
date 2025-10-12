@@ -2,7 +2,11 @@ import React from "react";
 import { Modal } from "antd";
 import GlassCard from "./GlassCard";
 import GlassButton from "./GlassButton";
-import { ExclamationCircleOutlined, InfoCircleOutlined, WarningOutlined } from "@ant-design/icons";
+import {
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 
 // Reusable glassmorphic table component for modal content
 interface TableRow {
@@ -21,13 +25,14 @@ function GlassTable({ rows, className = "" }: GlassTableProps): JSX.Element {
       <table className="w-full">
         <tbody>
           {rows.map((row, index) => (
-            <tr key={index} className="border-b border-white/10 last:border-b-0">
+            <tr
+              key={index}
+              className="border-b border-white/10 last:border-b-0"
+            >
               <td className="py-1 pr-3 text-white/70 font-medium text-sm w-1/3">
                 {row.label}:
               </td>
-              <td className="py-1 text-white/90 text-sm">
-                {row.value}
-              </td>
+              <td className="py-1 text-white/90 text-sm">{row.value}</td>
             </tr>
           ))}
         </tbody>
@@ -93,7 +98,7 @@ function ConfirmationModal({
       setInternalLoading(true);
       await onConfirm();
     } catch (error) {
-      console.error('Error in confirm action:', error);
+      console.error("Error in confirm action:", error);
     } finally {
       setInternalLoading(false);
     }
@@ -114,31 +119,31 @@ function ConfirmationModal({
       }}
     >
       <div className="p-6">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="flex-shrink-0 mt-1">{getIcon()}</div>
-            <div className="flex-1">
-              <h3 className="text-white text-xl font-semibold mb-4">{title}</h3>
-              <div className="text-white/90">{content}</div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 mt-6">
-            <GlassButton
-              variant="secondary"
-              onClick={onCancel}
-              disabled={loading}
-            >
-              {cancelText}
-            </GlassButton>
-            <GlassButton
-              variant={getConfirmButtonVariant()}
-              onClick={handleConfirmClick}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : confirmText}
-            </GlassButton>
+        <div className="flex items-start gap-4 mb-6">
+          <div className="flex-shrink-0 mt-1">{getIcon()}</div>
+          <div className="flex-1">
+            <h3 className="text-white text-xl font-semibold mb-4">{title}</h3>
+            <div className="text-white/90">{content}</div>
           </div>
         </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <GlassButton
+            variant="secondary"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            {cancelText}
+          </GlassButton>
+          <GlassButton
+            variant={getConfirmButtonVariant()}
+            onClick={handleConfirmClick}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : confirmText}
+          </GlassButton>
+        </div>
+      </div>
     </Modal>
   );
 }

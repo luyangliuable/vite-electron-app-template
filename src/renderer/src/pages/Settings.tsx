@@ -10,7 +10,7 @@ import {
   ExportOutlined,
   UserOutlined,
   HeartOutlined,
-  SaveOutlined
+  SaveOutlined,
 } from "@ant-design/icons";
 import GlassCard from "../components/GlassCard";
 import GlassButton from "../components/GlassButton";
@@ -86,7 +86,7 @@ function Settings(): JSX.Element {
     debugMode: false,
     logLevel: "info",
     customApiEndpoint: "",
-    notes: ""
+    notes: "",
   });
 
   const [hasChanges, setHasChanges] = useState(false);
@@ -103,9 +103,9 @@ function Settings(): JSX.Element {
   };
 
   const handleSettingChange = (key: keyof SettingsData, value: any) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
     setHasChanges(true);
   };
@@ -116,7 +116,7 @@ function Settings(): JSX.Element {
     notification.success({
       message: "Settings Saved",
       description: "Your settings have been saved successfully.",
-      placement: "topRight"
+      placement: "topRight",
     });
   };
 
@@ -141,7 +141,7 @@ function Settings(): JSX.Element {
       debugMode: false,
       logLevel: "info",
       customApiEndpoint: "",
-      notes: ""
+      notes: "",
     };
     setSettings(defaultSettings);
     setHasChanges(true);
@@ -150,7 +150,7 @@ function Settings(): JSX.Element {
   return (
     <div className="settings-container max-w-5xl mx-auto">
       <div className="mb-6">
-        <Title level={2} style={{ color: 'white', margin: 0 }}>
+        <Title level={2} style={{ color: "white", margin: 0 }}>
           Settings
         </Title>
         <p className="text-white/70 text-lg mt-2">
@@ -159,7 +159,11 @@ function Settings(): JSX.Element {
       </div>
 
       {hasChanges && (
-        <GlassCard padding="md" className="mb-6 border-l-4" style={{ borderLeftColor: "#f59e0b" }}>
+        <GlassCard
+          padding="md"
+          className="mb-6 border-l-4"
+          style={{ borderLeftColor: "#f59e0b" }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <SettingOutlined className="text-yellow-500" />
@@ -202,7 +206,9 @@ function Settings(): JSX.Element {
               <label className="text-white font-medium mb-2 block">Theme</label>
               <Select
                 value={themeMode}
-                onChange={(value) => setThemeMode(value as 'dark' | 'light' | 'system')}
+                onChange={(value) =>
+                  setThemeMode(value as "dark" | "light" | "system")
+                }
                 className="w-full search-input"
                 size="large"
               >
@@ -212,7 +218,7 @@ function Settings(): JSX.Element {
               </Select>
               <p className="text-white/60 text-sm mt-1">
                 Currently using {isDarkMode ? "dark" : "light"} theme
-                {themeMode === 'system' && ' (from system preference)'}
+                {themeMode === "system" && " (from system preference)"}
               </p>
             </div>
           </div>
@@ -222,24 +228,36 @@ function Settings(): JSX.Element {
         <GlassCard padding="lg">
           <div className="flex items-center gap-2 mb-6">
             <WifiOutlined className="text-white text-xl" />
-            <h3 className="text-xl font-semibold text-white">Device Settings</h3>
+            <h3 className="text-xl font-semibold text-white">
+              Device Settings
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-white font-medium mb-2 block">Auto-connect to last device</label>
+              <label className="text-white font-medium mb-2 block">
+                Auto-connect to last device
+              </label>
               <Switch
                 checked={settings.autoConnect}
-                onChange={(checked) => handleSettingChange('autoConnect', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("autoConnect", checked)
+                }
               />
-              <p className="text-white/60 text-sm mt-1">Automatically connect to the last used stethoscope</p>
+              <p className="text-white/60 text-sm mt-1">
+                Automatically connect to the last used stethoscope
+              </p>
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Connection Timeout (seconds)</label>
+              <label className="text-white font-medium mb-2 block">
+                Connection Timeout (seconds)
+              </label>
               <Select
                 value={settings.deviceTimeout}
-                onChange={(value) => handleSettingChange('deviceTimeout', value)}
+                onChange={(value) =>
+                  handleSettingChange("deviceTimeout", value)
+                }
                 className="w-full"
               >
                 <Option value={15}>15 seconds</Option>
@@ -250,19 +268,27 @@ function Settings(): JSX.Element {
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Audio Feedback</label>
+              <label className="text-white font-medium mb-2 block">
+                Audio Feedback
+              </label>
               <Switch
                 checked={settings.audioFeedback}
-                onChange={(checked) => handleSettingChange('audioFeedback', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("audioFeedback", checked)
+                }
               />
-              <p className="text-white/60 text-sm mt-1">Enable sound notifications for device events</p>
+              <p className="text-white/60 text-sm mt-1">
+                Enable sound notifications for device events
+              </p>
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Volume Level: {settings.volumeLevel}%</label>
+              <label className="text-white font-medium mb-2 block">
+                Volume Level: {settings.volumeLevel}%
+              </label>
               <Slider
                 value={settings.volumeLevel}
-                onChange={(value) => handleSettingChange('volumeLevel', value)}
+                onChange={(value) => handleSettingChange("volumeLevel", value)}
                 disabled={!settings.audioFeedback}
               />
             </div>
@@ -273,15 +299,21 @@ function Settings(): JSX.Element {
         <GlassCard padding="lg">
           <div className="flex items-center gap-2 mb-6">
             <HeartOutlined className="text-white text-xl" />
-            <h3 className="text-xl font-semibold text-white">Recording Settings</h3>
+            <h3 className="text-xl font-semibold text-white">
+              Recording Settings
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-white font-medium mb-2 block">Default Recording Length (seconds)</label>
+              <label className="text-white font-medium mb-2 block">
+                Default Recording Length (seconds)
+              </label>
               <Select
                 value={settings.defaultRecordingLength}
-                onChange={(value) => handleSettingChange('defaultRecordingLength', value)}
+                onChange={(value) =>
+                  handleSettingChange("defaultRecordingLength", value)
+                }
                 className="w-full"
               >
                 <Option value={15}>15 seconds</Option>
@@ -292,10 +324,14 @@ function Settings(): JSX.Element {
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Compression Level</label>
+              <label className="text-white font-medium mb-2 block">
+                Compression Level
+              </label>
               <Select
                 value={settings.compressionLevel}
-                onChange={(value) => handleSettingChange('compressionLevel', value)}
+                onChange={(value) =>
+                  handleSettingChange("compressionLevel", value)
+                }
                 className="w-full"
               >
                 <Option value="low">Low</Option>
@@ -305,12 +341,18 @@ function Settings(): JSX.Element {
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Auto-save Recordings</label>
+              <label className="text-white font-medium mb-2 block">
+                Auto-save Recordings
+              </label>
               <Switch
                 checked={settings.autoSaveRecordings}
-                onChange={(checked) => handleSettingChange('autoSaveRecordings', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("autoSaveRecordings", checked)
+                }
               />
-              <p className="text-white/60 text-sm mt-1">Automatically save recordings after completion</p>
+              <p className="text-white/60 text-sm mt-1">
+                Automatically save recordings after completion
+              </p>
             </div>
           </div>
         </GlassCard>
@@ -319,15 +361,19 @@ function Settings(): JSX.Element {
         <GlassCard padding="lg">
           <div className="flex items-center gap-2 mb-6">
             <SecurityScanOutlined className="text-white text-xl" />
-            <h3 className="text-xl font-semibold text-white">Analysis Settings</h3>
+            <h3 className="text-xl font-semibold text-white">
+              Analysis Settings
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-white font-medium mb-2 block">Analysis Mode</label>
+              <label className="text-white font-medium mb-2 block">
+                Analysis Mode
+              </label>
               <Select
                 value={settings.analysisMode}
-                onChange={(value) => handleSettingChange('analysisMode', value)}
+                onChange={(value) => handleSettingChange("analysisMode", value)}
                 className="w-full"
               >
                 <Option value="quick">Quick Analysis</Option>
@@ -337,23 +383,36 @@ function Settings(): JSX.Element {
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Confidence Threshold: {settings.confidenceThreshold}%</label>
+              <label className="text-white font-medium mb-2 block">
+                Confidence Threshold: {settings.confidenceThreshold}%
+              </label>
               <Slider
                 value={settings.confidenceThreshold}
-                onChange={(value) => handleSettingChange('confidenceThreshold', value)}
+                onChange={(value) =>
+                  handleSettingChange("confidenceThreshold", value)
+                }
                 min={50}
                 max={95}
               />
-              <p className="text-white/60 text-sm mt-1">Minimum confidence level for analysis results</p>
+              <p className="text-white/60 text-sm mt-1">
+                Minimum confidence level for analysis results
+              </p>
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-white font-medium mb-2 block">Real-time Analysis</label>
+              <label className="text-white font-medium mb-2 block">
+                Real-time Analysis
+              </label>
               <Switch
                 checked={settings.enableRealTimeAnalysis}
-                onChange={(checked) => handleSettingChange('enableRealTimeAnalysis', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("enableRealTimeAnalysis", checked)
+                }
               />
-              <p className="text-white/60 text-sm mt-1">Process heart sounds during recording (requires more processing power)</p>
+              <p className="text-white/60 text-sm mt-1">
+                Process heart sounds during recording (requires more processing
+                power)
+              </p>
             </div>
           </div>
         </GlassCard>
@@ -367,10 +426,14 @@ function Settings(): JSX.Element {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-white font-medium mb-2 block">Data Retention (days)</label>
+              <label className="text-white font-medium mb-2 block">
+                Data Retention (days)
+              </label>
               <Select
                 value={settings.dataRetention}
-                onChange={(value) => handleSettingChange('dataRetention', value)}
+                onChange={(value) =>
+                  handleSettingChange("dataRetention", value)
+                }
                 className="w-full"
               >
                 <Option value={90}>90 days</Option>
@@ -382,10 +445,12 @@ function Settings(): JSX.Element {
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Export Format</label>
+              <label className="text-white font-medium mb-2 block">
+                Export Format
+              </label>
               <Select
                 value={settings.exportFormat}
-                onChange={(value) => handleSettingChange('exportFormat', value)}
+                onChange={(value) => handleSettingChange("exportFormat", value)}
                 className="w-full"
               >
                 <Option value="json">JSON</Option>
@@ -396,12 +461,18 @@ function Settings(): JSX.Element {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-white font-medium mb-2 block">Anonymize Patient Data in Exports</label>
+              <label className="text-white font-medium mb-2 block">
+                Anonymize Patient Data in Exports
+              </label>
               <Switch
                 checked={settings.anonymizeData}
-                onChange={(checked) => handleSettingChange('anonymizeData', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("anonymizeData", checked)
+                }
               />
-              <p className="text-white/60 text-sm mt-1">Remove personally identifiable information from exported data</p>
+              <p className="text-white/60 text-sm mt-1">
+                Remove personally identifiable information from exported data
+              </p>
             </div>
           </div>
         </GlassCard>
@@ -415,27 +486,39 @@ function Settings(): JSX.Element {
 
           <div className="space-y-4">
             <div>
-              <label className="text-white font-medium mb-2 block">Enable Notifications</label>
+              <label className="text-white font-medium mb-2 block">
+                Enable Notifications
+              </label>
               <Switch
                 checked={settings.enableNotifications}
-                onChange={(checked) => handleSettingChange('enableNotifications', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("enableNotifications", checked)
+                }
               />
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Alert for Flagged Results</label>
+              <label className="text-white font-medium mb-2 block">
+                Alert for Flagged Results
+              </label>
               <Switch
                 checked={settings.flaggedResultsAlert}
-                onChange={(checked) => handleSettingChange('flaggedResultsAlert', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("flaggedResultsAlert", checked)
+                }
                 disabled={!settings.enableNotifications}
               />
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Device Disconnect Alerts</label>
+              <label className="text-white font-medium mb-2 block">
+                Device Disconnect Alerts
+              </label>
               <Switch
                 checked={settings.deviceDisconnectAlert}
-                onChange={(checked) => handleSettingChange('deviceDisconnectAlert', checked)}
+                onChange={(checked) =>
+                  handleSettingChange("deviceDisconnectAlert", checked)
+                }
                 disabled={!settings.enableNotifications}
               />
             </div>
@@ -446,25 +529,35 @@ function Settings(): JSX.Element {
         <GlassCard padding="lg">
           <div className="flex items-center gap-2 mb-6">
             <SettingOutlined className="text-white text-xl" />
-            <h3 className="text-xl font-semibold text-white">Advanced Settings</h3>
+            <h3 className="text-xl font-semibold text-white">
+              Advanced Settings
+            </h3>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="text-white font-medium mb-2 block">Debug Mode</label>
+                <label className="text-white font-medium mb-2 block">
+                  Debug Mode
+                </label>
                 <Switch
                   checked={settings.debugMode}
-                  onChange={(checked) => handleSettingChange('debugMode', checked)}
+                  onChange={(checked) =>
+                    handleSettingChange("debugMode", checked)
+                  }
                 />
-                <p className="text-white/60 text-sm mt-1">Enable detailed logging for troubleshooting</p>
+                <p className="text-white/60 text-sm mt-1">
+                  Enable detailed logging for troubleshooting
+                </p>
               </div>
 
               <div>
-                <label className="text-white font-medium mb-2 block">Log Level</label>
+                <label className="text-white font-medium mb-2 block">
+                  Log Level
+                </label>
                 <Select
                   value={settings.logLevel}
-                  onChange={(value) => handleSettingChange('logLevel', value)}
+                  onChange={(value) => handleSettingChange("logLevel", value)}
                   className="w-full"
                   disabled={!settings.debugMode}
                 >
@@ -477,14 +570,20 @@ function Settings(): JSX.Element {
             </div>
 
             <div>
-              <label className="text-white font-medium mb-2 block">Custom API Endpoint</label>
+              <label className="text-white font-medium mb-2 block">
+                Custom API Endpoint
+              </label>
               <Input
                 placeholder="https://api.sonorus.com/v1"
                 value={settings.customApiEndpoint}
-                onChange={(e) => handleSettingChange('customApiEndpoint', e.target.value)}
+                onChange={(e) =>
+                  handleSettingChange("customApiEndpoint", e.target.value)
+                }
                 className="search-input"
               />
-              <p className="text-white/60 text-sm mt-1">Override default API endpoint (advanced users only)</p>
+              <p className="text-white/60 text-sm mt-1">
+                Override default API endpoint (advanced users only)
+              </p>
             </div>
 
             <div>
@@ -492,7 +591,7 @@ function Settings(): JSX.Element {
               <TextArea
                 placeholder="Add any additional configuration notes..."
                 value={settings.notes}
-                onChange={(e) => handleSettingChange('notes', e.target.value)}
+                onChange={(e) => handleSettingChange("notes", e.target.value)}
                 rows={3}
                 className="search-input"
               />
@@ -502,18 +601,12 @@ function Settings(): JSX.Element {
 
         {/* Action Buttons */}
         <div className="flex justify-between items-center mb-16">
-          <GlassButton
-            variant="secondary"
-            onClick={resetToDefaults}
-          >
+          <GlassButton variant="secondary" onClick={resetToDefaults}>
             Reset to Defaults
           </GlassButton>
 
           <div className="flex gap-3">
-            <GlassButton
-              variant="secondary"
-              icon={<ExportOutlined />}
-            >
+            <GlassButton variant="secondary" icon={<ExportOutlined />}>
               Export Settings
             </GlassButton>
             <GlassButton

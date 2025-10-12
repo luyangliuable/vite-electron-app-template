@@ -8,7 +8,8 @@ type ExtendedWindow = Window & {
 
 const getAudioContext = (): AudioContext => {
   const extendedWindow = window as ExtendedWindow;
-  const AudioContextCtor = window.AudioContext || extendedWindow.webkitAudioContext;
+  const AudioContextCtor =
+    window.AudioContext || extendedWindow.webkitAudioContext;
 
   if (!AudioContextCtor) {
     throw new Error("Web Audio API is not supported in this environment");
@@ -74,7 +75,10 @@ const useMicrophoneAnalyser = (): UseMicrophoneAnalyserResult => {
       analyserRef.current = null;
     }
 
-    if (audioContextRef.current && audioContextRef.current.state === "running") {
+    if (
+      audioContextRef.current &&
+      audioContextRef.current.state === "running"
+    ) {
       void audioContextRef.current.suspend().catch(() => undefined);
     }
 
@@ -92,7 +96,9 @@ const useMicrophoneAnalyser = (): UseMicrophoneAnalyserResult => {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(MICROPHONE_CONSTRAINTS);
+      const stream = await navigator.mediaDevices.getUserMedia(
+        MICROPHONE_CONSTRAINTS,
+      );
       streamRef.current = stream;
 
       if (!audioContextRef.current) {
@@ -109,7 +115,10 @@ const useMicrophoneAnalyser = (): UseMicrophoneAnalyserResult => {
         try {
           sourceNodeRef.current.disconnect();
         } catch (disconnectError) {
-          console.warn("Failed to disconnect existing audio source", disconnectError);
+          console.warn(
+            "Failed to disconnect existing audio source",
+            disconnectError,
+          );
         }
       }
 
@@ -120,7 +129,10 @@ const useMicrophoneAnalyser = (): UseMicrophoneAnalyserResult => {
         try {
           analyserRef.current.disconnect();
         } catch (disconnectError) {
-          console.warn("Failed to disconnect existing analyser", disconnectError);
+          console.warn(
+            "Failed to disconnect existing analyser",
+            disconnectError,
+          );
         }
       }
 
@@ -139,8 +151,10 @@ const useMicrophoneAnalyser = (): UseMicrophoneAnalyserResult => {
       console.error("Failed to start microphone analyser", startError);
       stop();
 
-      const isPermissionError = startError instanceof DOMException &&
-        (startError.name === "NotAllowedError" || startError.name === "SecurityError");
+      const isPermissionError =
+        startError instanceof DOMException &&
+        (startError.name === "NotAllowedError" ||
+          startError.name === "SecurityError");
 
       if (isPermissionError) {
         setError(PERMISSION_ERROR_MESSAGE);

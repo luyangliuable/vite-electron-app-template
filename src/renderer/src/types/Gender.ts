@@ -1,1 +1,1 @@
-type Gender = 'male' | 'female' | 'other';
+type Gender = "male" | "female" | "other";

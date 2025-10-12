@@ -30,7 +30,11 @@ import SkinBarrierOptionsEnum from "../enums/SkinBarrierOptions";
 import type Recording from "../types/Recording";
 import type RecordingBatch from "../types/RecordingBatch";
 import type Patient from "../types/Patient";
-import { saveRecording, saveRecordingBatch, updateRecordingBatch } from "../utils/storage";
+import {
+  saveRecording,
+  saveRecordingBatch,
+  updateRecordingBatch,
+} from "../utils/storage";
 
 const { Step } = Steps;
 const { Option } = Select;
@@ -76,10 +80,15 @@ const heartAreas: HeartAreaInfo[] = [
 function QuickScanPage(): JSX.Element {
   const location = useLocation();
   // Recording state is now managed by useAudioRecording hook
-  const [currentStep, setCurrentStep] = useState<number>(WorkflowSteps.SelectPatient);
+  const [currentStep, setCurrentStep] = useState<number>(
+    WorkflowSteps.SelectPatient,
+  );
   const [analysisComplete, setAnalysisComplete] = useState(false);
-  const [selectedHeartArea, setSelectedHeartArea] = useState<HeartLocation | "">("");
-  const [currentRecordingBatch, setCurrentRecordingBatch] = useState<RecordingBatch | null>(null);
+  const [selectedHeartArea, setSelectedHeartArea] = useState<
+    HeartLocation | ""
+  >("");
+  const [currentRecordingBatch, setCurrentRecordingBatch] =
+    useState<RecordingBatch | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [completedRecordings, setCompletedRecordings] = useState<
     Record<HeartLocation, boolean>
@@ -87,11 +96,11 @@ function QuickScanPage(): JSX.Element {
     [HeartLocationEnum.Aortic]: false,
     [HeartLocationEnum.Pulmonary]: false,
     [HeartLocationEnum.Tricuspid]: false,
-    [HeartLocationEnum.Mitral]: false
+    [HeartLocationEnum.Mitral]: false,
   });
-  const [recordingResults, setRecordingResults] = useState<Partial<Record<HeartLocation, Recording>>>(
-    {},
-  );
+  const [recordingResults, setRecordingResults] = useState<
+    Partial<Record<HeartLocation, Recording>>
+  >({});
   const [skinBarriers, setSkinBarriers] = useState<LocalSkinBarrier[]>([]);
   const [currentSection, setCurrentSection] = useState(0);
   const {
@@ -109,7 +118,9 @@ function QuickScanPage(): JSX.Element {
   useEffect(() => {
     if (!currentRecordingBatch) {
       const patientFromNav = location.state?.patient as Patient | undefined;
-      const resumeBatch = location.state?.resumeBatch as RecordingBatch | undefined;
+      const resumeBatch = location.state?.resumeBatch as
+        | RecordingBatch
+        | undefined;
 
       if (resumeBatch && patientFromNav) {
         // Resume existing batch
@@ -135,11 +146,11 @@ function QuickScanPage(): JSX.Element {
         start_time: new Date().toISOString(),
         is_complete: false,
         recordings: [],
-        selected_recordings: []
+        selected_recordings: [],
       });
       setCurrentRecordingBatch(batch);
     } catch (error) {
-      console.error('Failed to create patient recording batch:', error);
+      console.error("Failed to create patient recording batch:", error);
     }
   };
 
@@ -153,14 +164,14 @@ function QuickScanPage(): JSX.Element {
         [HeartLocationEnum.Aortic]: false,
         [HeartLocationEnum.Pulmonary]: false,
         [HeartLocationEnum.Tricuspid]: false,
-        [HeartLocationEnum.Mitral]: false
+        [HeartLocationEnum.Mitral]: false,
       };
 
       const recordingResults: Partial<Record<HeartLocation, Recording>> = {};
 
       // Mark areas as completed based on existing recordings
       if (batch.recordings) {
-        batch.recordings.forEach(recording => {
+        batch.recordings.forEach((recording) => {
           newCompletedRecordings[recording.location] = true;
           recordingResults[recording.location] = recording;
         });
@@ -171,10 +182,12 @@ function QuickScanPage(): JSX.Element {
 
       // Restore skin barriers if any
       if (batch.skin_barriers) {
-        const localBarriers: LocalSkinBarrier[] = batch.skin_barriers.map((barrier, index) => ({
-          id: `barrier-${index}`,
-          ...barrier
-        }));
+        const localBarriers: LocalSkinBarrier[] = batch.skin_barriers.map(
+          (barrier, index) => ({
+            id: `barrier-${index}`,
+            ...barrier,
+          }),
+        );
         setSkinBarriers(localBarriers);
       }
 
@@ -186,9 +199,11 @@ function QuickScanPage(): JSX.Element {
         setCurrentStep(WorkflowSteps.SelectLocation);
       }
 
-      console.log(`Resumed batch ${batch.id} with ${batch.recordings?.length || 0} existing recordings`);
+      console.log(
+        `Resumed batch ${batch.id} with ${batch.recordings?.length || 0} existing recordings`,
+      );
     } catch (error) {
-      console.error('Failed to resume existing batch:', error);
+      console.error("Failed to resume existing batch:", error);
     }
   };
 
@@ -207,8 +222,8 @@ function QuickScanPage(): JSX.Element {
           weight: 0,
           medications: [],
           conditions: [],
-          notes: [`Anonymous recording session started at ${sessionTimestamp}`]
-        }
+          notes: [`Anonymous recording session started at ${sessionTimestamp}`],
+        },
       };
 
       const batch = await saveRecordingBatch({
@@ -218,11 +233,11 @@ function QuickScanPage(): JSX.Element {
         start_time: new Date().toISOString(),
         is_complete: false,
         recordings: [],
-        selected_recordings: []
+        selected_recordings: [],
       });
       setCurrentRecordingBatch(batch);
     } catch (error) {
-      console.error('Failed to create anonymous recording batch:', error);
+      console.error("Failed to create anonymous recording batch:", error);
     }
   };
 
@@ -268,7 +283,7 @@ function QuickScanPage(): JSX.Element {
 
     // Ensure selectedHeartArea is a valid HeartLocation, not empty string
     if (!isValidHeartLocation(selectedHeartArea) || !currentRecordingBatch) {
-      console.error('Invalid heart area selected:', selectedHeartArea);
+      console.error("Invalid heart area selected:", selectedHeartArea);
       return;
     }
 
@@ -276,7 +291,7 @@ function QuickScanPage(): JSX.Element {
 
     try {
       const recordingData = await stopAudioRecording();
-      console.log('Recording data received:', recordingData);
+      console.log("Recording data received:", recordingData);
 
       if (recordingData) {
         // Save the recording to IndexedDB
@@ -285,7 +300,9 @@ function QuickScanPage(): JSX.Element {
           device_id: 1, // Default device ID
           location: currentArea,
           audio: recordingData.blob,
-          start_time: new Date(Date.now() - recordingData.duration).toISOString(),
+          start_time: new Date(
+            Date.now() - recordingData.duration,
+          ).toISOString(),
         });
 
         // Mark this area as completed
@@ -305,11 +322,14 @@ function QuickScanPage(): JSX.Element {
         const updatedBatch = {
           ...currentRecordingBatch,
           recordings: [...currentRecordingBatch.recordings, recording],
-          selected_recordings: [...currentRecordingBatch.selected_recordings, recording.id],
-          skin_barriers: skinBarriers.map(barrier => ({
+          selected_recordings: [
+            ...currentRecordingBatch.selected_recordings,
+            recording.id,
+          ],
+          skin_barriers: skinBarriers.map((barrier) => ({
             level: barrier.level,
-            option: barrier.option
-          }))
+            option: barrier.option,
+          })),
         };
 
         await updateRecordingBatch(updatedBatch);
@@ -325,7 +345,7 @@ function QuickScanPage(): JSX.Element {
           const completeBatch = {
             ...updatedBatch,
             is_complete: true,
-            step_id: WorkflowSteps.Complete
+            step_id: WorkflowSteps.Complete,
           };
           await updateRecordingBatch(completeBatch);
           setCurrentRecordingBatch(completeBatch);
@@ -338,18 +358,22 @@ function QuickScanPage(): JSX.Element {
           }, 2000);
         }
       } else {
-        console.error('No recording data received from stopAudioRecording');
-        alert('Recording failed - no audio data was captured. Please try again.');
+        console.error("No recording data received from stopAudioRecording");
+        alert(
+          "Recording failed - no audio data was captured. Please try again.",
+        );
       }
     } catch (error) {
-      console.error('Failed to save recording:', error);
-      alert('Failed to save recording. Please try again.');
+      console.error("Failed to save recording:", error);
+      alert("Failed to save recording. Please try again.");
     }
   };
 
-  const handleRedoRecording = async (heartArea: HeartLocation): Promise<void> => {
+  const handleRedoRecording = async (
+    heartArea: HeartLocation,
+  ): Promise<void> => {
     if (!currentRecordingBatch) {
-      console.error('No current recording batch available for redo');
+      console.error("No current recording batch available for redo");
       return;
     }
 
@@ -359,18 +383,19 @@ function QuickScanPage(): JSX.Element {
       if (existingRecording && currentRecordingBatch.recordings) {
         // Remove the recording from the batch
         const updatedRecordings = currentRecordingBatch.recordings.filter(
-          (recording) => recording.location !== heartArea
+          (recording) => recording.location !== heartArea,
         );
-        const updatedSelectedRecordings = currentRecordingBatch.selected_recordings.filter(
-          (recordingId) => recordingId !== existingRecording.id
-        );
+        const updatedSelectedRecordings =
+          currentRecordingBatch.selected_recordings.filter(
+            (recordingId) => recordingId !== existingRecording.id,
+          );
 
         // Update the recording batch
         const updatedBatch = {
           ...currentRecordingBatch,
           recordings: updatedRecordings,
           selected_recordings: updatedSelectedRecordings,
-          is_complete: false // Mark as incomplete since we're redoing
+          is_complete: false, // Mark as incomplete since we're redoing
         };
 
         await updateRecordingBatch(updatedBatch);
@@ -378,13 +403,13 @@ function QuickScanPage(): JSX.Element {
       }
 
       // Reset the completion status for this area
-      setCompletedRecordings(prev => ({
+      setCompletedRecordings((prev) => ({
         ...prev,
-        [heartArea]: false
+        [heartArea]: false,
       }));
 
       // Remove from recording results
-      setRecordingResults(prev => {
+      setRecordingResults((prev) => {
         const newResults = { ...prev };
         delete newResults[heartArea];
         return newResults;
@@ -395,8 +420,8 @@ function QuickScanPage(): JSX.Element {
 
       console.log(`Redo recording prepared for ${heartArea} valve`);
     } catch (error) {
-      console.error('Failed to prepare redo recording:', error);
-      alert('Failed to prepare redo recording. Please try again.');
+      console.error("Failed to prepare redo recording:", error);
+      alert("Failed to prepare redo recording. Please try again.");
     }
   };
 
@@ -410,7 +435,7 @@ function QuickScanPage(): JSX.Element {
       [HeartLocationEnum.Aortic]: false,
       [HeartLocationEnum.Pulmonary]: false,
       [HeartLocationEnum.Tricuspid]: false,
-      [HeartLocationEnum.Mitral]: false
+      [HeartLocationEnum.Mitral]: false,
     });
     setRecordingResults({});
     setSkinBarriers([]);
@@ -421,7 +446,9 @@ function QuickScanPage(): JSX.Element {
   const canStartRecording = selectedHeartArea;
 
   // Type guard to check if selectedHeartArea is a valid HeartLocation
-  const isValidHeartLocation = (area: HeartLocation | ""): area is HeartLocation => {
+  const isValidHeartLocation = (
+    area: HeartLocation | "",
+  ): area is HeartLocation => {
     return area !== "";
   };
 
@@ -535,7 +562,9 @@ function QuickScanPage(): JSX.Element {
   const isResumedSession = location.state?.resumeBatch ? true : false;
 
   return (
-    <div className={`quick-scan-container ${isRecording ? 'recording-active' : ''}`}>
+    <div
+      className={`quick-scan-container ${isRecording ? "recording-active" : ""}`}
+    >
       {/* Side Panels Container - Prevents Overlapping */}
       <div className="side-panels-container">
         {/* Patient Information Panel - Right Side Thin Layout */}
@@ -565,27 +594,49 @@ function QuickScanPage(): JSX.Element {
                       </tr>
                       <tr>
                         <td className="label">DOB:</td>
-                        <td className="value">{new Date(selectedPatient.dob).toLocaleDateString()}</td>
+                        <td className="value">
+                          {new Date(selectedPatient.dob).toLocaleDateString()}
+                        </td>
                       </tr>
-                      {selectedPatient.patient_details.conditions && selectedPatient.patient_details.conditions.length > 0 && (
-                        <tr>
-                          <td className="label">Conditions:</td>
-                          <td className="value">{selectedPatient.patient_details.conditions.join(", ")}</td>
-                        </tr>
-                      )}
-                      {selectedPatient.patient_details.medications && selectedPatient.patient_details.medications.length > 0 && (
-                        <tr>
-                          <td className="label">Medications:</td>
-                          <td className="value">{selectedPatient.patient_details.medications.join(", ")}</td>
-                        </tr>
-                      )}
+                      {selectedPatient.patient_details.conditions &&
+                        selectedPatient.patient_details.conditions.length >
+                          0 && (
+                          <tr>
+                            <td className="label">Conditions:</td>
+                            <td className="value">
+                              {selectedPatient.patient_details.conditions.join(
+                                ", ",
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      {selectedPatient.patient_details.medications &&
+                        selectedPatient.patient_details.medications.length >
+                          0 && (
+                          <tr>
+                            <td className="label">Medications:</td>
+                            <td className="value">
+                              {selectedPatient.patient_details.medications.join(
+                                ", ",
+                              )}
+                            </td>
+                          </tr>
+                        )}
                       <tr>
                         <td className="label">Height:</td>
-                        <td className="value">{selectedPatient.patient_details.height > 0 ? `${selectedPatient.patient_details.height}cm` : 'N/A'}</td>
+                        <td className="value">
+                          {selectedPatient.patient_details.height > 0
+                            ? `${selectedPatient.patient_details.height}cm`
+                            : "N/A"}
+                        </td>
                       </tr>
                       <tr>
                         <td className="label">Weight:</td>
-                        <td className="value">{selectedPatient.patient_details.weight > 0 ? `${selectedPatient.patient_details.weight}kg` : 'N/A'}</td>
+                        <td className="value">
+                          {selectedPatient.patient_details.weight > 0
+                            ? `${selectedPatient.patient_details.weight}kg`
+                            : "N/A"}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -596,94 +647,135 @@ function QuickScanPage(): JSX.Element {
         )}
 
         {/* Recording Context Panel */}
-        {selectedPatient && selectedPatient.name !== "Quick Scan Session" && (isValidHeartLocation(selectedHeartArea) || skinBarriers.length > 0) && (
-          <section className="recording-context-panel">
-            <GlassCard padding="sm" className="w-full">
-              <div className="flex flex-col gap-3">
-                {isValidHeartLocation(selectedHeartArea) && (
-                  <div className={`p-2 rounded-lg transition-all duration-300 ${
-                    completedRecordings[selectedHeartArea] ? 'recording-completed' : ''
-                  }`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-white/70 text-sm">Recording:</span>
-                      {completedRecordings[selectedHeartArea] && (
-                        <span className="text-green-400 text-xs">✓ Completed</span>
-                      )}
+        {selectedPatient &&
+          selectedPatient.name !== "Quick Scan Session" &&
+          (isValidHeartLocation(selectedHeartArea) ||
+            skinBarriers.length > 0) && (
+            <section className="recording-context-panel">
+              <GlassCard padding="sm" className="w-full">
+                <div className="flex flex-col gap-3">
+                  {isValidHeartLocation(selectedHeartArea) && (
+                    <div
+                      className={`p-2 rounded-lg transition-all duration-300 ${
+                        completedRecordings[selectedHeartArea]
+                          ? "recording-completed"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-white/70 text-sm">
+                          Recording:
+                        </span>
+                        {completedRecordings[selectedHeartArea] && (
+                          <span className="text-green-400 text-xs">
+                            ✓ Completed
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 min-h-[20px]">
+                        {isRecording && (
+                          <HeartOutlined className="animate-heartbeat flex-shrink-0" />
+                        )}
+                        <span className="text-white text-sm leading-tight">
+                          {
+                            heartAreas.find(
+                              (area) => area.key === selectedHeartArea,
+                            )?.label
+                          }
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 min-h-[20px]">
-                      {isRecording && (
-                        <HeartOutlined className="animate-heartbeat flex-shrink-0" />
-                      )}
-                      <span className="text-white text-sm leading-tight">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                  )}
+                  {skinBarriers.length > 0 && (
+                    <div className="flex flex-col gap-1 p-2 rounded-lg">
+                      <span className="text-white/70 text-sm">Barriers:</span>
+                      <div>
+                        <table className="barriers-table">
+                          <tbody>
+                            {skinBarriers.map((barrier, index) => (
+                              <tr key={barrier.id}>
+                                <td className="barriers-label">
+                                  {barrier.level}
+                                </td>
+                                <td className="barriers-value">
+                                  {barrier.option}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {skinBarriers.length > 0 && (
-                  <div className="flex flex-col gap-1 p-2 rounded-lg">
-                    <span className="text-white/70 text-sm">Barriers:</span>
-                    <div>
-                      <table className="barriers-table">
-                        <tbody>
-                          {skinBarriers.map((barrier, index) => (
-                            <tr key={barrier.id}>
-                              <td className="barriers-label">{barrier.level}</td>
-                              <td className="barriers-value">{barrier.option}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </GlassCard>
-          </section>
-        )}
+                  )}
+                </div>
+              </GlassCard>
+            </section>
+          )}
 
         {/* Recording Context Panel for Quick Scan Sessions */}
-        {(!selectedPatient || selectedPatient.name === "Quick Scan Session") && (isValidHeartLocation(selectedHeartArea) || skinBarriers.length > 0) && (
-          <section className="recording-context-panel--anonymous">
-            <GlassCard padding="sm" className="w-full">
-              <div className="flex flex-col gap-3">
-                {isValidHeartLocation(selectedHeartArea) && (
-                  <div className={`p-2 rounded-lg transition-all duration-300 ${
-                    completedRecordings[selectedHeartArea] ? 'recording-completed' : ''
-                  }`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-white/70 text-sm">Recording:</span>
-                      {completedRecordings[selectedHeartArea] && (
-                        <span className="text-green-400 text-xs">✓ Completed</span>
-                      )}
+        {(!selectedPatient || selectedPatient.name === "Quick Scan Session") &&
+          (isValidHeartLocation(selectedHeartArea) ||
+            skinBarriers.length > 0) && (
+            <section className="recording-context-panel--anonymous">
+              <GlassCard padding="sm" className="w-full">
+                <div className="flex flex-col gap-3">
+                  {isValidHeartLocation(selectedHeartArea) && (
+                    <div
+                      className={`p-2 rounded-lg transition-all duration-300 ${
+                        completedRecordings[selectedHeartArea]
+                          ? "recording-completed"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-white/70 text-sm">
+                          Recording:
+                        </span>
+                        {completedRecordings[selectedHeartArea] && (
+                          <span className="text-green-400 text-xs">
+                            ✓ Completed
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 min-h-[20px]">
+                        {isRecording && (
+                          <HeartOutlined className="animate-heartbeat flex-shrink-0" />
+                        )}
+                        <span className="text-white text-sm leading-tight">
+                          {
+                            heartAreas.find(
+                              (area) => area.key === selectedHeartArea,
+                            )?.label
+                          }
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 min-h-[20px]">
-                      {isRecording && (
-                        <HeartOutlined className="animate-heartbeat flex-shrink-0" />
-                      )}
-                      <span className="text-white text-sm leading-tight">{heartAreas.find(area => area.key === selectedHeartArea)?.label}</span>
+                  )}
+                  {skinBarriers.length > 0 && (
+                    <div className="flex flex-col gap-1 p-2 rounded-lg">
+                      <span className="text-white/70 text-sm">Barriers:</span>
+                      <div>
+                        <table className="barriers-table">
+                          <tbody>
+                            {skinBarriers.map((barrier, index) => (
+                              <tr key={barrier.id}>
+                                <td className="barriers-label">
+                                  {barrier.level}
+                                </td>
+                                <td className="barriers-value">
+                                  {barrier.option}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {skinBarriers.length > 0 && (
-                  <div className="flex flex-col gap-1 p-2 rounded-lg">
-                    <span className="text-white/70 text-sm">Barriers:</span>
-                    <div>
-                      <table className="barriers-table">
-                        <tbody>
-                          {skinBarriers.map((barrier, index) => (
-                            <tr key={barrier.id}>
-                              <td className="barriers-label">{barrier.level}</td>
-                              <td className="barriers-value">{barrier.option}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </GlassCard>
-          </section>
-        )}
+                  )}
+                </div>
+              </GlassCard>
+            </section>
+          )}
       </div>
 
       {/* Section 1: Skin Barriers Configuration */}
@@ -945,7 +1037,12 @@ function QuickScanPage(): JSX.Element {
                       {/* <div className="text-white/60 text-sm">{area.description}</div> */}
                       {recordingResults[area.key] && (
                         <div className="text-xs text-white/50 mt-1">
-                          Recorded: {recordingResults[area.key] ? new Date(recordingResults[area.key]!.start_time).toLocaleTimeString() : ''}
+                          Recorded:{" "}
+                          {recordingResults[area.key]
+                            ? new Date(
+                                recordingResults[area.key]!.start_time,
+                              ).toLocaleTimeString()
+                            : ""}
                         </div>
                       )}
                     </div>
@@ -1055,7 +1152,8 @@ function QuickScanPage(): JSX.Element {
                   trailColor="rgba(255,255,255,0.2)"
                 />
                 <p className="text-white/60 text-center mt-1 text-xs">
-                  {Math.max(0, Math.ceil((30000 - recordingTime) / 1000))} seconds remaining
+                  {Math.max(0, Math.ceil((30000 - recordingTime) / 1000))}{" "}
+                  seconds remaining
                 </p>
               </div>
             )}
@@ -1065,11 +1163,18 @@ function QuickScanPage(): JSX.Element {
           <div className="recording-controls text-center mb-4">
             {!isRecording && !analysisComplete && (
               <div>
-                {isValidHeartLocation(selectedHeartArea) && completedRecordings[selectedHeartArea] ? (
+                {isValidHeartLocation(selectedHeartArea) &&
+                completedRecordings[selectedHeartArea] ? (
                   // Show redo options for completed areas
                   <div className="space-y-2">
                     <p className="text-green-400 text-base mb-2">
-                      ✓ {heartAreas.find(area => area.key === selectedHeartArea)?.label} recording complete
+                      ✓{" "}
+                      {
+                        heartAreas.find(
+                          (area) => area.key === selectedHeartArea,
+                        )?.label
+                      }{" "}
+                      recording complete
                     </p>
                     <div className="flex justify-center gap-2">
                       <GlassButton
@@ -1079,7 +1184,8 @@ function QuickScanPage(): JSX.Element {
                       >
                         Redo Recording
                       </GlassButton>
-                      {Object.values(completedRecordings).filter(Boolean).length < 4 && (
+                      {Object.values(completedRecordings).filter(Boolean)
+                        .length < 4 && (
                         <GlassButton
                           variant="primary"
                           size="md"
@@ -1154,9 +1260,15 @@ function QuickScanPage(): JSX.Element {
                         <tbody>
                           {skinBarriers.map((barrier, index) => (
                             <tr key={barrier.id}>
-                              <td className="barriers-label text-yellow-300/80">{index + 1}.</td>
-                              <td className="barriers-label text-yellow-300/80">{barrier.level}</td>
-                              <td className="barriers-value text-yellow-300/80">{barrier.option}</td>
+                              <td className="barriers-label text-yellow-300/80">
+                                {index + 1}.
+                              </td>
+                              <td className="barriers-label text-yellow-300/80">
+                                {barrier.level}
+                              </td>
+                              <td className="barriers-value text-yellow-300/80">
+                                {barrier.option}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1181,7 +1293,6 @@ function QuickScanPage(): JSX.Element {
               </div>
             )}
           </div>
-
         </GlassCard>
       </section>
     </div>

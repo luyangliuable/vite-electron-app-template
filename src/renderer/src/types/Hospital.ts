@@ -1,3 +1,3 @@
 export default interface Hospital {
-	name: string;
+  name: string;
 }

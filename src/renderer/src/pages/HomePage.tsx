@@ -47,8 +47,7 @@ function HomePage(): JSX.Element {
           <div className="flex items-center justify-center mb-8">
             <div
               className="bg-white/5 backdrop-blur-md rounded-2xl p-6"
-              style={{
-              }}
+              style={{}}
             >
               <img
                 src={image}
@@ -85,10 +84,14 @@ function HomePage(): JSX.Element {
                   </span>
                 </div>
 
-                <h3 className={`text-lg font-semibold mb-3 tracking-wide ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                <h3
+                  className={`text-lg font-semibold mb-3 tracking-wide ${isDarkMode ? "text-white" : "text-slate-800"}`}
+                >
                   {buttonContent.text}
                 </h3>
-                <p className={`leading-relaxed font-light text-sm ${isDarkMode ? 'text-white/80' : 'text-slate-600'}`}>
+                <p
+                  className={`leading-relaxed font-light text-sm ${isDarkMode ? "text-white/80" : "text-slate-600"}`}
+                >
                   {buttonContent.description}
                 </p>
               </div>
@@ -108,11 +111,14 @@ function HomePage(): JSX.Element {
         <div className="max-w-2xl mx-auto">
           <div
             className="bg-white/2 backdrop-blur-md rounded-xl p-6"
-            style={{
-            }}
+            style={{}}
           >
-            <p className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? 'text-white/90' : 'text-slate-600'}`}>
-              Advanced cardiac screening platform for healthcare professionals. Streamlining heart sound analysis with intelligent detection technology and comprehensive patient recording management.
+            <p
+              className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? "text-white/90" : "text-slate-600"}`}
+            >
+              Advanced cardiac screening platform for healthcare professionals.
+              Streamlining heart sound analysis with intelligent detection
+              technology and comprehensive patient recording management.
             </p>
           </div>
         </div>

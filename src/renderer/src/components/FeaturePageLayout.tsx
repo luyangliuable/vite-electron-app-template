@@ -20,7 +20,9 @@ function FeaturePageLayout(): JSX.Element {
             borderColor: "#ACACE6",
             boxShadow:
               "0 4px 16px rgba(0, 0, 0, 0.15), 0 0 20px rgba(255, 255, 255, 0.05) inset",
-            transform: isMacOS ? 'translateX(var(--macos-traffic-light-offset))' : 'none'
+            transform: isMacOS
+              ? "translateX(var(--macos-traffic-light-offset))"
+              : "none",
           }}
         >
           <div className="no-drag">
@@ -38,7 +40,6 @@ function FeaturePageLayout(): JSX.Element {
           <div className="ml-auto no-drag">
             <Navbar />
           </div>
-
         </div>
 
         {/* Main content */}
