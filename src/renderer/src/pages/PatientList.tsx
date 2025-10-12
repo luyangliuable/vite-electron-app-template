@@ -7,6 +7,7 @@ import {
   DeleteOutlined,
   HeartOutlined,
   PlayCircleOutlined,
+  PauseCircleOutlined,
   DownloadOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
@@ -67,6 +68,9 @@ function PatientList(): JSX.Element {
   } | null>(null);
   const [playingRecordings, setPlayingRecordings] = useState<Set<number>>(
     new Set(),
+  );
+  const [audioInstances, setAudioInstances] = useState<Map<number, HTMLAudioElement>>(
+    new Map(),
   );
 
   useEffect(() => {
@@ -394,6 +398,51 @@ function PatientList(): JSX.Element {
     setDeleteModal(null);
   };
 
+  const handleStopRecording = (recordingId: number) => {
+    try {
+      // Get the audio instance for this recording
+      const audio = audioInstances.get(recordingId);
+
+      if (audio) {
+        // Pause the audio
+        audio.pause();
+
+        // Reset to beginning for next playback
+        audio.currentTime = 0;
+
+        // Clean up the audio object
+        const url = audio.src;
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+
+        // Remove event listeners to prevent memory leaks
+        audio.removeEventListener('ended', audio.onended);
+        audio.removeEventListener('error', audio.onerror);
+      }
+
+      // Update state - remove from playing set and audio instances
+      setPlayingRecordings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(recordingId);
+        return newSet;
+      });
+
+      setAudioInstances(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(recordingId);
+        return newMap;
+      });
+
+      console.log(`Stopped recording playback: ${recordingId}`);
+      message.success("Recording stopped");
+
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      message.error("Failed to stop recording");
+    }
+  };
+
   const handlePlayRecording = async (recording: any) => {
     // Check if already playing
     if (playingRecordings.has(recording.id)) {
@@ -432,6 +481,9 @@ function PatientList(): JSX.Element {
       const url = URL.createObjectURL(recording.audio);
       const audio = new Audio(url);
 
+      // Store the audio instance for later pause/stop control
+      setAudioInstances((prev) => new Map(prev).set(recording.id, audio));
+
       // Set up event listeners
       const cleanup = () => {
         URL.revokeObjectURL(url);
@@ -440,14 +492,23 @@ function PatientList(): JSX.Element {
           newSet.delete(recording.id);
           return newSet;
         });
+        setAudioInstances((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(recording.id);
+          return newMap;
+        });
       };
 
-      audio.addEventListener("ended", cleanup);
-      audio.addEventListener("error", (e) => {
+      // Store cleanup functions on the audio object for later reference
+      audio.onended = cleanup;
+      audio.onerror = (e) => {
         console.error("Audio playback error:", e);
         cleanup();
         message.error("Failed to play audio. The audio file may be corrupted.");
-      });
+      };
+
+      audio.addEventListener("ended", audio.onended);
+      audio.addEventListener("error", audio.onerror);
 
       // Attempt to play
       await audio.play();
@@ -463,6 +524,11 @@ function PatientList(): JSX.Element {
         newSet.delete(recording.id);
         return newSet;
       });
+      setAudioInstances((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(recording.id);
+        return newMap;
+      });
 
       if (error instanceof DOMException && error.name === "NotAllowedError") {
         message.error(
@@ -473,6 +539,17 @@ function PatientList(): JSX.Element {
           `Failed to play audio: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
+    }
+  };
+
+  const handlePlayPauseRecording = async (recording: any) => {
+    // Check if already playing - if so, stop it; if not, play it
+    if (playingRecordings.has(recording.id)) {
+      // Currently playing - stop/pause it
+      handleStopRecording(recording.id);
+    } else {
+      // Not playing - start playback
+      await handlePlayRecording(recording);
     }
   };
 
@@ -862,7 +939,7 @@ function PatientList(): JSX.Element {
                                       <Tooltip
                                         title={
                                           playingRecordings.has(recording.id)
-                                            ? "Playing..."
+                                            ? "Pause Recording"
                                             : "Play Recording"
                                         }
                                       >
@@ -870,22 +947,17 @@ function PatientList(): JSX.Element {
                                           size="sm"
                                           variant="secondary"
                                           icon={
-                                            <PlayCircleOutlined
-                                              className={
-                                                playingRecordings.has(
-                                                  recording.id,
-                                                )
-                                                  ? "animate-pulse text-green-400"
-                                                  : ""
-                                              }
-                                            />
+                                            playingRecordings.has(recording.id) ? (
+                                              <PauseCircleOutlined
+                                                className="text-green-400"
+                                              />
+                                            ) : (
+                                              <PlayCircleOutlined />
+                                            )
                                           }
                                           onClick={() =>
-                                            handlePlayRecording(recording)
+                                            handlePlayPauseRecording(recording)
                                           }
-                                          disabled={playingRecordings.has(
-                                            recording.id,
-                                          )}
                                         />
                                       </Tooltip>
                                       <Tooltip title="Download">
