@@ -35,6 +35,9 @@ import {
   saveRecordingBatch,
   updateRecordingBatch,
 } from "../utils/storage";
+import type { ComprehensiveAnalysisResult } from "../types/HeartAnalysis";
+import AnalysisProcessor from "../components/AnalysisProcessor";
+import AnalysisResultsTable from "../components/AnalysisResultsTable";
 
 const { Step } = Steps;
 const { Option } = Select;
@@ -84,6 +87,8 @@ function QuickScanPage(): JSX.Element {
     WorkflowSteps.SelectPatient,
   );
   const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [analysisProcessing, setAnalysisProcessing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<ComprehensiveAnalysisResult | null>(null);
   const [selectedHeartArea, setSelectedHeartArea] = useState<
     HeartLocation | ""
   >("");
@@ -350,12 +355,7 @@ function QuickScanPage(): JSX.Element {
           await updateRecordingBatch(completeBatch);
           setCurrentRecordingBatch(completeBatch);
 
-          setCurrentStep(WorkflowSteps.Record);
-          // Start comprehensive analysis
-          setTimeout(() => {
-            setCurrentStep(WorkflowSteps.Complete);
-            setAnalysisComplete(true);
-          }, 2000);
+          // All recordings complete - user can now start comprehensive analysis manually
         }
       } else {
         console.error("No recording data received from stopAudioRecording");
@@ -425,9 +425,120 @@ function QuickScanPage(): JSX.Element {
     }
   };
 
+  const performComprehensiveAnalysis = (): void => {
+    console.log("performComprehensiveAnalysis called:", {
+      currentRecordingBatch: !!currentRecordingBatch,
+      selectedPatient: !!selectedPatient,
+      batchPatient: !!currentRecordingBatch?.patient
+    });
+
+    if (!currentRecordingBatch) {
+      console.error("Cannot perform analysis: missing batch data");
+      return;
+    }
+
+    // Use the patient from the recording batch if selectedPatient is null
+    const patientForAnalysis = selectedPatient || currentRecordingBatch.patient;
+    
+    if (!patientForAnalysis) {
+      console.error("Cannot perform analysis: no patient information available");
+      return;
+    }
+
+    console.log("Starting analysis for patient:", patientForAnalysis.name);
+
+    setAnalysisProcessing(true);
+    
+    // Auto-scroll to the analysis section
+    scrollToSection(3);
+
+    // Generate mock analysis results
+    const generateAnalysisResults = (): ComprehensiveAnalysisResult => {
+      const generateValveAnalysis = (valve: HeartLocation) => {
+        // Generate realistic percentages with some deterministic variation based on valve type
+        const baseRegurgitation = valve === HeartLocationEnum.Mitral ? 8 : valve === HeartLocationEnum.Tricuspid ? 5 : 3;
+        const baseStenosis = valve === HeartLocationEnum.Aortic ? 12 : valve === HeartLocationEnum.Pulmonary ? 8 : 4;
+
+        const regurgitation = Math.min(25, Math.max(0, baseRegurgitation + (Math.random() * 10 - 5)));
+        const stenosis = Math.min(30, Math.max(0, baseStenosis + (Math.random() * 8 - 4)));
+
+        // Determine severity based on combined percentages
+        const maxPercentage = Math.max(regurgitation, stenosis);
+        let severity: "Normal" | "Mild" | "Moderate" | "Severe" = "Normal";
+        if (maxPercentage > 20) severity = "Severe";
+        else if (maxPercentage > 15) severity = "Moderate"; 
+        else if (maxPercentage > 8) severity = "Mild";
+
+        return {
+          valve,
+          regurgitation_percentage: regurgitation,
+          stenosis_percentage: stenosis,
+          severity_level: severity,
+          notes: severity !== "Normal" ? `${severity.toLowerCase()} ${valve} valve dysfunction detected` : undefined
+        };
+      };
+
+      const valveAnalyses = [
+        generateValveAnalysis(HeartLocationEnum.Aortic),
+        generateValveAnalysis(HeartLocationEnum.Pulmonary),
+        generateValveAnalysis(HeartLocationEnum.Tricuspid),
+        generateValveAnalysis(HeartLocationEnum.Mitral)
+      ];
+
+      // Generate overall assessment
+      const abnormalValves = valveAnalyses.filter(v => v.severity_level !== "Normal");
+      const severeValves = abnormalValves.filter(v => v.severity_level === "Severe");
+      
+      let overallAssessment = "";
+      let recommendations: string[] = [];
+
+      if (severeValves.length > 0) {
+        overallAssessment = `Severe valve dysfunction detected in ${severeValves.length} valve(s). Immediate cardiology referral recommended.`;
+        recommendations.push("Urgent cardiology consultation required");
+        recommendations.push("Consider echocardiogram within 48 hours");
+        recommendations.push("Monitor for symptoms of heart failure");
+      } else if (abnormalValves.length > 0) {
+        overallAssessment = `Mild to moderate valve irregularities detected in ${abnormalValves.length} valve(s). Follow-up recommended.`;
+        recommendations.push("Schedule follow-up in 3-6 months");
+        recommendations.push("Consider echocardiogram for detailed assessment");
+        if (skinBarriers.length > 0) {
+          recommendations.push("Repeat recording with optimal skin preparation may improve accuracy");
+        }
+      } else {
+        overallAssessment = "All heart valves appear to be functioning within normal parameters.";
+        recommendations.push("Continue routine cardiac health monitoring");
+        recommendations.push("Maintain healthy lifestyle and regular exercise");
+      }
+
+      return {
+        patient: patientForAnalysis,
+        session_timestamp: currentRecordingBatch.start_time,
+        analysis_timestamp: new Date().toISOString(),
+        valve_analyses: valveAnalyses,
+        skin_barriers: skinBarriers.map(barrier => ({
+          level: barrier.level,
+          option: barrier.option
+        })),
+        overall_assessment: overallAssessment,
+        recommendations: recommendations
+      };
+    };
+
+    // After 3 seconds, complete analysis
+    setTimeout(() => {
+      const results = generateAnalysisResults();
+      setAnalysisResults(results);
+      setAnalysisProcessing(false);
+      setAnalysisComplete(true);
+      setCurrentStep(WorkflowSteps.Complete);
+    }, 3000);
+  };
+
   const handleReset = (): void => {
     setCurrentStep(WorkflowSteps.SelectPatient);
     setAnalysisComplete(false);
+    setAnalysisProcessing(false);
+    setAnalysisResults(null);
     setSelectedHeartArea("");
     setCurrentRecordingBatch(null);
     setSelectedPatient(null);
@@ -439,6 +550,10 @@ function QuickScanPage(): JSX.Element {
     });
     setRecordingResults({});
     setSkinBarriers([]);
+    
+    // Scroll back to the beginning (Skin Barriers section)
+    scrollToSection(0);
+    
     // Create new anonymous batch for next session
     createAnonymousRecordingBatch();
   };
@@ -1233,67 +1348,69 @@ function QuickScanPage(): JSX.Element {
                   <GlassButton
                     variant="success"
                     size="md"
-                    onClick={() => setCurrentStep(WorkflowSteps.Record)}
+                    onClick={performComprehensiveAnalysis}
                   >
                     Start Comprehensive Analysis
                   </GlassButton>
                 </div>
               )}
 
-            {analysisComplete && (
-              <div className="text-center">
-                <div className="mb-6">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <h3 className="text-xl font-semibold text-white">
-                      Analysis Complete
-                    </h3>
-                  </div>
-
-                  {/* Display Active Skin Barriers in Results */}
-                  {skinBarriers.length > 0 && (
-                    <div className="mb-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                      <div className="text-yellow-400 text-sm font-medium mb-2">
-                        Active Skin Barriers:
-                      </div>
-                      <table className="barriers-table">
-                        <tbody>
-                          {skinBarriers.map((barrier, index) => (
-                            <tr key={barrier.id}>
-                              <td className="barriers-label text-yellow-300/80">
-                                {index + 1}.
-                              </td>
-                              <td className="barriers-label text-yellow-300/80">
-                                {barrier.level}
-                              </td>
-                              <td className="barriers-value text-yellow-300/80">
-                                {barrier.option}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  <p className="text-green-400 text-lg">
-                    ✓{" "}
-                    {Math.random() > 0.7
-                      ? "Minor irregularities detected - recommend follow-up"
-                      : "Normal heart sounds detected"}
-                  </p>
-                </div>
-                <GlassButton
-                  variant="secondary"
-                  size="md"
-                  onClick={handleReset}
-                >
-                  Start New Recording Session
-                </GlassButton>
-              </div>
-            )}
           </div>
         </GlassCard>
+      </section>
+
+      {/* Section 4: Analysis Results */}
+      <section id="section-3" className="snap-section section-4">
+        <div className="analysis-section-container">
+          <GlassCard padding="lg" className="w-full max-w-5xl">
+            <div className="text-center mb-6">
+              <Title level={2} style={{ color: "white", margin: 0 }}>
+                Heart Analysis Results
+              </Title>
+              <p className="text-white/70 text-lg mt-2">
+                Comprehensive cardiac assessment based on all 4 valve recordings
+              </p>
+            </div>
+
+            {analysisProcessing && (
+              <div className="mb-6">
+                <AnalysisProcessor 
+                  onAnalysisComplete={() => {
+                    // This will be handled by the setTimeout in performComprehensiveAnalysis
+                  }}
+                  duration={3000}
+                />
+              </div>
+            )}
+
+            {analysisComplete && analysisResults && (
+              <div className="mb-6">
+                <AnalysisResultsTable analysisResult={analysisResults} />
+              </div>
+            )}
+
+            <div className="text-center">
+              {analysisComplete && (
+                <div className="flex justify-center gap-4">
+                  <GlassButton
+                    variant="secondary"
+                    size="md"
+                    onClick={() => scrollToSection(2)}
+                  >
+                    Back to Recording
+                  </GlassButton>
+                  <GlassButton
+                    variant="primary"
+                    size="md"
+                    onClick={handleReset}
+                  >
+                    Start New Recording Session
+                  </GlassButton>
+                </div>
+              )}
+            </div>
+          </GlassCard>
+        </div>
       </section>
     </div>
   );
