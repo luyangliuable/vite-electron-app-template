@@ -1,5 +1,5 @@
 /**
- * Audio file loading utility for Sonorus application
+ * Audio file loading utility for Viteelectronapptemplate application
  * Handles loading WAV files from filesystem and converting to Blob format
  */
 

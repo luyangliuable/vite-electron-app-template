@@ -1,9 +1,9 @@
 {
-  "name": "sonorus",
+  "name": "electron-react-template",
   "version": "1.0.0",
-  "description": "Professional heart sound analysis application with React and TypeScript",
+  "description": "Modern Electron + React + TypeScript template with glassmorphic design system and production-ready patterns",
   "main": "./out/main/index.js",
-  "author": "example.com",
+  "author": "Your Name <your.email@example.com>",
   "homepage": "https://electron-vite.org",
   "type": "module",
   "scripts": {

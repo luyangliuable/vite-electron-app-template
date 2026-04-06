@@ -1,5 +1,5 @@
 /**
- * Mock data seeding utility for Sonorus application
+ * Mock data seeding utility for application
  * Creates default demonstration data including patients and recording batches
  */
 
@@ -19,15 +19,15 @@ import {
 } from './storage';
 
 /**
- * Creates the mock patient "Trevin Wadu" with complete details
+ * Creates the mock patient "Sample User" with complete details
  * @returns Patient object ready for storage
  */
-const createTrevinWaduPatient = (): Omit<Patient, 'id'> => {
+const createSamplePatient = (): Omit<Patient, 'id'> => {
   const patientDetails: Omit<PatientDetails, 'id'> = {
-    height: 180, // 1.80m as requested
-    weight: 75, // Reasonable default weight
-    medications: [], // No medications
-    conditions: [], // No medical conditions
+    height: 180,
+    weight: 75,
+    medications: [],
+    conditions: [],
     notes: [
       'Mock patient created for demonstration purposes',
       'Complete heart valve recording session available',
@@ -36,9 +36,9 @@ const createTrevinWaduPatient = (): Omit<Patient, 'id'> => {
   };
 
   const patient: Omit<Patient, 'id'> = {
-    name: 'Trevin Wadu',
-    dob: '2000-02-20T00:00:00.000Z', // February 20, 2000
-    patient_uid: 'TW-2000-001',
+    name: 'Sample User',
+    dob: '1990-01-01T00:00:00.000Z',
+    patient_uid: 'DEMO-001',
     patient_details: patientDetails as PatientDetails
   };
 
@@ -149,13 +149,13 @@ const findPatientByNameOrUID = async (name: string, uid?: string): Promise<Patie
  */
 export const checkAndSeedTrevinWadu = async (): Promise<boolean> => {
   try {
-    console.log('🔍 Checking if Trevin Wadu exists in database...');
+    console.log(' Checking if Trevin Wadu exists in database...');
     
     // Check if Trevin Wadu already exists
     const existingTrevin = await findPatientByNameOrUID('Trevin Wadu', 'TW-2000-001');
     
     if (existingTrevin) {
-      console.log('✅ Trevin Wadu already exists in database:', {
+      console.log(' Trevin Wadu already exists in database:', {
         id: existingTrevin.id,
         name: existingTrevin.name,
         uid: existingTrevin.patient_uid
@@ -163,10 +163,10 @@ export const checkAndSeedTrevinWadu = async (): Promise<boolean> => {
       return false; // Already exists, no seeding needed
     }
 
-    console.log('📝 Trevin Wadu not found, creating mock patient...');
+    console.log(' Trevin Wadu not found, creating mock patient...');
 
     // Load the audio file with timeout protection
-    console.log('🎵 Loading audio file for Trevin Wadu recordings...');
+    console.log(' Loading audio file for Trevin Wadu recordings...');
     const audioBlob = await Promise.race([
       loadAorticWAVFile(),
       new Promise<Blob>((_, reject) => 
@@ -175,20 +175,20 @@ export const checkAndSeedTrevinWadu = async (): Promise<boolean> => {
     ]);
 
     if (!validateAudioBlob(audioBlob)) {
-      console.warn('⚠️ Audio validation failed, but continuing with available blob');
+      console.warn(' Audio validation failed, but continuing with available blob');
     }
 
-    console.log('🎵 Audio loaded for Trevin Wadu:', {
+    console.log(' Audio loaded for Trevin Wadu:', {
       size: audioBlob.size,
       type: audioBlob.type
     });
 
     // Create Trevin Wadu patient
-    console.log('👤 Creating Trevin Wadu patient...');
-    const patientData = createTrevinWaduPatient();
+    console.log(' Creating Trevin Wadu patient...');
+    const patientData = createSamplePatient();
     const patient = await savePatient(patientData);
 
-    console.log('✅ Trevin Wadu patient created:', {
+    console.log(' Trevin Wadu patient created:', {
       id: patient.id,
       name: patient.name,
       dob: patient.dob,
@@ -199,7 +199,7 @@ export const checkAndSeedTrevinWadu = async (): Promise<boolean> => {
     console.log('🫀 Creating complete heart valve recording batch...');
     const recordingBatch = await createCompleteRecordingBatch(patient, audioBlob);
 
-    console.log('🎉 Trevin Wadu seeded successfully!', {
+    console.log(' Trevin Wadu seeded successfully!', {
       patient: patient.name,
       batchId: recordingBatch.id,
       recordings: recordingBatch.recordings.length,
@@ -210,7 +210,7 @@ export const checkAndSeedTrevinWadu = async (): Promise<boolean> => {
     return true; // Seeding was performed
 
   } catch (error) {
-    console.error('❌ Error checking/seeding Trevin Wadu:', error);
+    console.error(' Error checking/seeding Trevin Wadu:', error);
     
     // Don't throw the error - just log it and continue
     // This prevents the app from crashing if seeding fails
@@ -257,7 +257,7 @@ export const seedMockDataIfEmpty = async (): Promise<boolean> => {
 
     // Create the mock patient
     console.log('Creating Trevin Wadu patient...');
-    const patientData = createTrevinWaduPatient();
+    const patientData = createSamplePatient();
     const patient = await savePatient(patientData);
 
     console.log('Trevin Wadu patient created:', {
@@ -270,7 +270,7 @@ export const seedMockDataIfEmpty = async (): Promise<boolean> => {
     console.log('Creating recording batch with 4 valve recordings...');
     const recordingBatch = await createCompleteRecordingBatch(patient, audioBlob);
 
-    console.log('✅ Mock data seeding completed successfully!', {
+    console.log(' Mock data seeding completed successfully!', {
       patient: patient.name,
       batchId: recordingBatch.id,
       recordings: recordingBatch.recordings.length,
@@ -280,7 +280,7 @@ export const seedMockDataIfEmpty = async (): Promise<boolean> => {
     return true;
 
   } catch (error) {
-    console.error('❌ Error seeding mock data:', error);
+    console.error(' Error seeding mock data:', error);
     
     // Don't throw the error - just log it and continue
     // This prevents the app from crashing if mock data seeding fails
@@ -306,7 +306,7 @@ export const forceSeedMockData = async (): Promise<boolean> => {
     }
 
     // Create the mock patient
-    const patientData = createTrevinWaduPatient();
+    const patientData = createSamplePatient();
     const patient = await savePatient(patientData);
 
     // Create complete recording batch

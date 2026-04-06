@@ -68,14 +68,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Set theme mode and apply it
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
-    localStorage.setItem("sonorus-theme-mode", mode);
+    localStorage.setItem("viteElectronAppTemplate-theme-mode", mode);
     applyTheme(mode);
   };
 
   useEffect(() => {
     // Force light mode as default (clear any previous dark mode preference)
     const initialMode = "light";
-    localStorage.setItem("sonorus-theme-mode", "light");
+    localStorage.setItem("viteElectronAppTemplate-theme-mode", "light");
     setThemeModeState(initialMode);
     applyTheme(initialMode);
 

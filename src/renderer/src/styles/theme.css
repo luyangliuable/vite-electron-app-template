@@ -1,4 +1,4 @@
-/* Sonorus Theme Color System */
+/* Application Theme Color System */
 :root {
   /* Theme Variables */
   --bg-primary: 0 0 0;
@@ -500,8 +500,8 @@
   color: white !important;
 }
 
-/* Make Sonorus logo visible in dark mode */
-.dark-theme .sonorus-logo {
+/* Make app logo visible in dark mode */
+.dark-theme .app-logo {
   filter: brightness(0) invert(1);
 }
 

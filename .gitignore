@@ -1,9 +1,9 @@
-node_modules
-dist
-out
+node_modules/
+dist/
+out/
+*.log
 .DS_Store
-*.log*
 .env
-
-# AI Development Documentation (contains sensitive AI assistance disclosure)
-CLAUDE.md
+.env.local
+*.bak
+*.tmp

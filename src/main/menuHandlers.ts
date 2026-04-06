@@ -30,8 +30,8 @@ export class MenuHandlers {
 
   async handleExportData(): Promise<void> {
     const result = await dialog.showSaveDialog(this.mainWindow, {
-      title: "Export Sonorus Data",
-      defaultPath: `sonorus-export-${new Date().toISOString().split("T")[0]}.json`,
+      title: "Export Viteelectronapptemplate Data",
+      defaultPath: `viteElectronAppTemplate-export-${new Date().toISOString().split("T")[0]}.json`,
       filters: [
         { name: "JSON Files", extensions: ["json"] },
         { name: "CSV Files", extensions: ["csv"] },
@@ -51,7 +51,7 @@ export class MenuHandlers {
       type: "info",
       title: "Check for Updates",
       message: "Update Check",
-      detail: `You are running Sonorus version ${app.getVersion()}.\n\nAutomatic update checking will be available in a future release.`,
+      detail: `You are running Viteelectronapptemplate version ${app.getVersion()}.\n\nAutomatic update checking will be available in a future release.`,
       buttons: ["OK"],
       defaultId: 0,
     });

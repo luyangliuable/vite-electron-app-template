@@ -1,5 +1,5 @@
-appId: com.sonorus.app
-productName: Sonorus
+appId: com.viteElectronAppTemplate.app
+productName: Viteelectronapptemplate
 directories:
   buildResources: build
 electronDist: node_modules/electron/dist
@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: sonorus
+  executableName: viteElectronAppTemplate
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

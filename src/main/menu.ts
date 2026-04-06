@@ -20,7 +20,7 @@ export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
             label: app.getName(),
             submenu: [
               {
-                label: "About Sonorus",
+                label: "About Application",
                 click: () => showAboutDialog(mainWindow),
               },
               { type: "separator" as const },
@@ -82,7 +82,7 @@ export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
           ? [
               { type: "separator" as const },
               {
-                label: "Quit Sonorus",
+                label: "Quit Application",
                 accelerator: "Ctrl+Q",
                 click: () => app.quit(),
               },
@@ -147,7 +147,7 @@ export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
         {
           label: "Documentation",
           click: async () => {
-            await shell.openExternal("https://sonorus.tech");
+            await shell.openExternal("https://viteElectronAppTemplate.tech");
           },
         },
         { type: "separator" },
@@ -162,7 +162,7 @@ export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
           ? [
               { type: "separator" as const },
               {
-                label: "About Sonorus",
+                label: "About Application",
                 click: () => showAboutDialog(mainWindow),
               },
             ]
@@ -176,13 +176,13 @@ export function createApplicationMenu(mainWindow: BrowserWindow): Menu {
 
 function showAboutDialog(mainWindow: BrowserWindow): void {
   const version = app.getVersion();
-  const name = "Sonorus";
+  const name = "Electron Template";
 
   dialog.showMessageBox(mainWindow, {
     type: "info",
     title: `About ${name}`,
     message: `${name} ${version}`,
-    detail: `Advanced cardiac screening platform for healthcare professionals.\n\nStreamlining heart sound analysis with intelligent detection technology and comprehensive patient recording management.\n\n© 2025 Sonorus Technologies`,
+    detail: `Modern Electron + React + TypeScript template with glassmorphic design.\n\nBuilt for production with comprehensive component library, state management, and responsive layouts.\n\n 2025`,
     buttons: ["OK"],
     defaultId: 0,
   });

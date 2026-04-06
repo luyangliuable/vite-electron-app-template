@@ -32,8 +32,8 @@ function FeaturePageLayout(): JSX.Element {
             <div className="flex items-center justify-center">
               <img
                 src={image}
-                alt="Sonorus Logo"
-                className="h-8 w-32 mx-auto sonorus-logo object-contain"
+                alt="Viteelectronapptemplate Logo"
+                className="h-8 w-32 mx-auto viteElectronAppTemplate-logo object-contain"
               />
             </div>
           </div>

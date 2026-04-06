@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
 import BackgroundLayout from "../components/BackgroundLayout";
 
-import image from "../assets/sn_primary_logo.png";
+import image from "../assets/app_logo.svg";
 
 function HomePage(): JSX.Element {
   const { isDarkMode } = useTheme();
@@ -19,16 +19,10 @@ function HomePage(): JSX.Element {
     description: string;
   }[] = [
     {
-      text: "Quick Scan",
-      path: "/quick-scan",
-      icon: <UnorderedListOutlined />,
-      description: "Record a heart sound without saving the results",
-    },
-    {
-      text: "Patient Records",
-      path: "/patients",
-      icon: <FileAddOutlined />,
-      description: "View and manage patient records and recordings",
+      text: "Settings",
+      path: "/settings",
+      icon: <SettingOutlined />,
+      description: "Configure application preferences",
     },
   ];
 
@@ -51,8 +45,8 @@ function HomePage(): JSX.Element {
             >
               <img
                 src={image}
-                alt="Sonorus Logo"
-                className="h-16 w-auto mx-auto sonorus-logo"
+                alt="App Logo"
+                className="h-16 w-auto mx-auto app-logo"
               />
             </div>
           </div>
@@ -116,9 +110,9 @@ function HomePage(): JSX.Element {
             <p
               className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? "text-white/90" : "text-slate-600"}`}
             >
-              Advanced cardiac screening platform for healthcare professionals.
-              Streamlining heart sound analysis with intelligent detection
-              technology and comprehensive patient recording management.
+              Modern Electron + React + TypeScript template with glassmorphic design.
+              Built for production with comprehensive component library,
+              state management, and responsive layouts.
             </p>
           </div>
         </div>

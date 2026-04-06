@@ -1,4 +1,4 @@
-name: Release Sonorus App
+name: Release Viteelectronapptemplate App
 
 on:
   push: # Trigger on push to any branch
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-and-release:
-    name: Build and Release Sonorus DMG
+    name: Build and Release Viteelectronapptemplate DMG
     runs-on: macos-latest
     
     steps:
@@ -30,11 +30,11 @@ jobs:
           BRANCH=$(echo ${{ github.ref_name }} | sed 's/[^a-zA-Z0-9._-]/-/g')
           if [ "${{ github.ref_name }}" = "main" ]; then
             TAG="v${VERSION}"
-            RELEASE_NAME="Sonorus v${VERSION} - Heart Sound Analysis"
+            RELEASE_NAME="Viteelectronapptemplate v${VERSION} - Heart Sound Analysis"
             PRERELEASE="false"
           else
             TAG="v${VERSION}-${BRANCH}"
-            RELEASE_NAME="Sonorus v${VERSION}-${BRANCH} - Heart Sound Analysis (${BRANCH} branch)"
+            RELEASE_NAME="Viteelectronapptemplate v${VERSION}-${BRANCH} - Heart Sound Analysis (${BRANCH} branch)"
             PRERELEASE="true"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -77,16 +77,16 @@ jobs:
             
             ### Features
             - 🫀 Comprehensive 4-valve heart sound recording (Aortic, Pulmonary, Tricuspid, Mitral)
-            - 🎨 Modern glassmorphic design with light/dark themes
-            - 🖥️ Full-screen native macOS application
-            - 📊 Patient management and recording history
-            - ⚙️ Advanced settings and configuration
+            -  Modern glassmorphic design with light/dark themes
+            -  Full-screen native macOS application
+            -  Patient management and recording history
+            -  Advanced settings and configuration
             
             ### Installation
             1. Download the DMG file below
             2. Open the DMG file
-            3. Drag Sonorus.app to your Applications folder
-            4. Launch Sonorus from Applications
+            3. Drag Viteelectronapptemplate.app to your Applications folder
+            4. Launch Viteelectronapptemplate from Applications
             
             ### System Requirements
             - macOS 10.15 or later
@@ -106,7 +106,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sonorus-macos-build
+          name: viteElectronAppTemplate-macos-build
           path: |
             dist/
             !dist/**/.DS_Store

@@ -96,7 +96,7 @@ function Settings(): JSX.Element {
   }, []);
 
   const loadSettings = () => {
-    const savedSettings = localStorage.getItem("sonorus-settings");
+    const savedSettings = localStorage.getItem("viteElectronAppTemplate-settings");
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings));
     }
@@ -111,7 +111,7 @@ function Settings(): JSX.Element {
   };
 
   const saveSettings = () => {
-    localStorage.setItem("sonorus-settings", JSON.stringify(settings));
+    localStorage.setItem("viteElectronAppTemplate-settings", JSON.stringify(settings));
     setHasChanges(false);
     notification.success({
       message: "Settings Saved",
@@ -154,7 +154,7 @@ function Settings(): JSX.Element {
           Settings
         </Title>
         <p className="text-white/70 text-lg mt-2">
-          Configure your Sonorus application preferences and device settings
+          Configure your application preferences and device settings
         </p>
       </div>
 
@@ -574,7 +574,7 @@ function Settings(): JSX.Element {
                 Custom API Endpoint
               </label>
               <Input
-                placeholder="https://api.sonorus.com/v1"
+                placeholder="https://api.viteElectronAppTemplate.com/v1"
                 value={settings.customApiEndpoint}
                 onChange={(e) =>
                   handleSettingChange("customApiEndpoint", e.target.value)
