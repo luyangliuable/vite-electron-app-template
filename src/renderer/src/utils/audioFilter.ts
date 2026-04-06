@@ -37,30 +37,32 @@ export interface FilteredAudioPlayer {
  * @param audioBlob - The audio data as a Blob
  * @returns Promise<FilteredAudioPlayer> - A player interface with filtering applied
  */
-export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<FilteredAudioPlayer> => {
+export const createFilteredAudioPlayer = async (
+  audioBlob: Blob,
+): Promise<FilteredAudioPlayer> => {
   const audioContext = getAudioContext();
-  
+
   // Convert blob to ArrayBuffer and decode
   const arrayBuffer = await audioBlob.arrayBuffer();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  
+
   // Create and configure the low-pass filter
   const lowPassFilter = audioContext.createBiquadFilter();
-  lowPassFilter.type = 'lowpass';
+  lowPassFilter.type = "lowpass";
   lowPassFilter.frequency.setValueAtTime(1000, audioContext.currentTime); // 1000Hz cutoff
   lowPassFilter.Q.setValueAtTime(0.7, audioContext.currentTime); // Moderate resonance
-  
+
   // Track the current source node for control
   let currentSource: AudioBufferSourceNode | null = null;
   let isPlaying = false;
   let isPaused = false;
   let startTime = 0;
   let pauseTime = 0;
-  
+
   // Event handlers
   let onEndedHandler: (() => void) | null = null;
   let onErrorHandler: ((error: Error) => void) | null = null;
-  
+
   const cleanup = () => {
     if (currentSource) {
       try {
@@ -72,17 +74,17 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
       currentSource = null;
     }
   };
-  
+
   const createSourceAndPlay = (offset = 0) => {
     cleanup();
-    
+
     currentSource = audioContext.createBufferSource();
     currentSource.buffer = audioBuffer;
-    
+
     // Connect: Source → Filter → Destination
     currentSource.connect(lowPassFilter);
     lowPassFilter.connect(audioContext.destination);
-    
+
     // Set up event handlers
     currentSource.onended = () => {
       isPlaying = false;
@@ -91,12 +93,12 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
         onEndedHandler();
       }
     };
-    
+
     // Resume audio context if suspended
-    if (audioContext.state === 'suspended') {
+    if (audioContext.state === "suspended") {
       audioContext.resume();
     }
-    
+
     try {
       currentSource.start(0, offset);
       isPlaying = true;
@@ -104,18 +106,22 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
       startTime = audioContext.currentTime - offset;
     } catch (error) {
       if (onErrorHandler) {
-        onErrorHandler(error instanceof Error ? error : new Error('Failed to start audio playback'));
+        onErrorHandler(
+          error instanceof Error
+            ? error
+            : new Error("Failed to start audio playback"),
+        );
       }
       throw error;
     }
   };
-  
+
   const player: FilteredAudioPlayer = {
     play: async () => {
       if (isPlaying && !isPaused) {
         return; // Already playing
       }
-      
+
       if (isPaused) {
         // Resume from pause
         createSourceAndPlay(pauseTime);
@@ -124,7 +130,7 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
         createSourceAndPlay(0);
       }
     },
-    
+
     pause: () => {
       if (isPlaying && currentSource) {
         pauseTime = audioContext.currentTime - startTime;
@@ -133,7 +139,7 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
         isPaused = true;
       }
     },
-    
+
     stop: () => {
       cleanup();
       isPlaying = false;
@@ -141,7 +147,7 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
       startTime = 0;
       pauseTime = 0;
     },
-    
+
     get currentTime(): number {
       if (isPlaying && currentSource) {
         return audioContext.currentTime - startTime;
@@ -151,28 +157,28 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
       }
       return 0;
     },
-    
+
     get duration(): number {
       return audioBuffer.duration;
     },
-    
+
     set onended(handler: (() => void) | null) {
       onEndedHandler = handler;
     },
-    
+
     get onended(): (() => void) | null {
       return onEndedHandler;
     },
-    
+
     set onerror(handler: ((error: Error) => void) | null) {
       onErrorHandler = handler;
     },
-    
+
     get onerror(): ((error: Error) => void) | null {
       return onErrorHandler;
-    }
+    },
   };
-  
+
   return player;
 };
 
@@ -183,20 +189,23 @@ export const createFilteredAudioPlayer = async (audioBlob: Blob): Promise<Filter
 export const isAudioFilteringSupported = (): boolean => {
   try {
     const extendedWindow = window as ExtendedWindow;
-    const AudioContextCtor = window.AudioContext || extendedWindow.webkitAudioContext;
-    
+    const AudioContextCtor =
+      window.AudioContext || extendedWindow.webkitAudioContext;
+
     if (!AudioContextCtor) {
       return false;
     }
-    
+
     // Test if we can create the required nodes
     const testContext = new AudioContextCtor();
     const testFilter = testContext.createBiquadFilter();
-    
+
     // Clean up test context
     testContext.close();
-    
-    return !!(testFilter && typeof testFilter.frequency?.setValueAtTime === 'function');
+
+    return !!(
+      testFilter && typeof testFilter.frequency?.setValueAtTime === "function"
+    );
   } catch (error) {
     return false;
   }

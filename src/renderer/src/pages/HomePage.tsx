@@ -110,8 +110,8 @@ function HomePage(): JSX.Element {
             <p
               className={`text-center leading-relaxed text-sm font-light ${isDarkMode ? "text-white/90" : "text-slate-600"}`}
             >
-              Modern Electron + React + TypeScript template with glassmorphic design.
-              Built for production with comprehensive component library,
+              Modern Electron + React + TypeScript template with glassmorphic
+              design. Built for production with comprehensive component library,
               state management, and responsive layouts.
             </p>
           </div>

@@ -96,7 +96,9 @@ function Settings(): JSX.Element {
   }, []);
 
   const loadSettings = () => {
-    const savedSettings = localStorage.getItem("viteElectronAppTemplate-settings");
+    const savedSettings = localStorage.getItem(
+      "viteElectronAppTemplate-settings",
+    );
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings));
     }
@@ -111,7 +113,10 @@ function Settings(): JSX.Element {
   };
 
   const saveSettings = () => {
-    localStorage.setItem("viteElectronAppTemplate-settings", JSON.stringify(settings));
+    localStorage.setItem(
+      "viteElectronAppTemplate-settings",
+      JSON.stringify(settings),
+    );
     setHasChanges(false);
     notification.success({
       message: "Settings Saved",
